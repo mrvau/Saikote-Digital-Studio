@@ -3,40 +3,54 @@ import Select from "./Select";
 import Button from "./Button";
 import { useReducer } from "react";
 import { normalInputs, labInputs } from "../constants";
+import { initialState } from "../constants";
 
-const updateState = (state, action) => {
+const reducer = (state, action) => {
 	switch (action.type) {
 		case "UPDATE_FIELD":
-			return { ...state, [action.field]: action.value };
+			const {field, value} = action
+			const {}
+			return {
+				...state[action.field],
+				
+				
+			};
+		case "ERROR":
+			return { ...state, errors: { ...state.errors, [action.field]: action.value } };
 		default:
 			return state;
 	}
 };
 
-const Form = () => {
-	const initialState = {
-		snapType: "",
-		photoNo: "",
-		photoSizePrint: "",
-		quantity: 0,
-		amount: 0,
-		printType: "",
-		deliveryType: "",
-		photoSizeLab: "",
-		labQuantity: 0,
+const validateForm = () => {
+		Object.keys(state).forEach((input) => {
+			if (state[input] === "Select One" || state[input] === 0) {
+				dispatch({
+					type: "ERROR",
+					field: input,
+					value: "This field is required!",
+				});
+			}
+		});
+		console.log(state.errors);
 	};
 
-	const [state, dispatch] = useReducer(updateState, initialState);
+const Form = () => {
+	const [state, dispatch] = useReducer(reducer, initialState);
+
+	
 
 	const handleSubmit = async (e) => {
 		e.preventDefault();
-		await fetch("http://localhost:3000", {
-			body: JSON.stringify(state),
-			method: "POST",
-			headers: {
-				"Content-Type": "application/json",
-			},
-		});
+		validateForm();
+		// console.log(e);
+		// await fetch("http://localhost:3000", {
+		// 	body: JSON.stringify(state),
+		// 	method: "POST",
+		// 	headers: {
+		// 		"Content-Type": "application/json",
+		// 	},
+		// });
 	};
 
 	return (

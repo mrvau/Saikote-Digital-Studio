@@ -71,3 +71,51 @@ export const labInputs = [
 		id: "labQuantity",
 	},
 ];
+
+export const initialState = {
+	snapType: {
+		value: "",
+		isValid: false,
+		errorMessage: "",
+	},
+	photoNo: {
+		value: "",
+		isValid: false,
+		errorMessage: "",
+	},
+	photoSizePrint: {
+		value: "",
+		isValid: false,
+		errorMessage: "",
+	},
+	quantity: {
+		value: 0,
+		isValid: false,
+		errorMessage: "",
+	},
+	amount: {
+		value: 0,
+		isValid: false,
+		errorMessage: "",
+	},
+	printType: {
+		value: "",
+		isValid: false,
+		errorMessage: "",
+	},
+	deliveryType: {
+		value: "",
+		isValid: false,
+		errorMessage: "",
+	},
+	photoSizeLab: {
+		value: "",
+		isValid: false,
+		errorMessage: "",
+	},
+	labQuantity: {
+		value: 0,
+		isValid: false,
+		errorMessage: "",
+	},
+};
