@@ -2,15 +2,19 @@ import mongoose from "mongoose";
 
 const photoSchema = mongoose.Schema(
 	{
-		imageType: {
+		snapType: {
 			type: String,
+			enum: ["Snapshot", "Scan"],
 			default: "Snapshot",
-		},
-		photoId: {
-			type: String,
 			required: true,
 		},
-		photoSize: {
+		photoNo: {
+			type: String,
+			required: function () {
+				return this.snapType === "Snapshot";
+			},
+		},
+		photoSizePrint: {
 			type: String,
 			required: true,
 		},
@@ -19,18 +23,33 @@ const photoSchema = mongoose.Schema(
 			required: true,
 		},
 		amount: {
-			type: String,
+			type: Number,
 			required: true,
 		},
 		printType: {
 			type: String,
+			enum: ["Normal", "Lab"],
 			default: "Normal",
+			required: true,
 		},
-		labPhotoSize: {
+		deliveryType: {
 			type: String,
+			default: "Non-Urgent",
+			required: function () {
+				return this.printType === "Lab";
+			},
+		},
+		photoSizeLab: {
+			type: String,
+			required: function () {
+				return this.printType === "Lab";
+			},
 		},
 		labQuantity: {
 			type: Number,
+			required: function () {
+				return this.printType === "Lab";
+			},
 		},
 		date: {
 			type: Date,
