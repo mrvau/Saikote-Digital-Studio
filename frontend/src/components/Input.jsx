@@ -1,4 +1,4 @@
-const Input = ({ type, placeholder, dispatch, value, id, disabled = false }) => {
+const Input = ({ type, placeholder, onChange, value, id, disabled = false }) => {
 	return (
 		<input
 			id={id}
@@ -9,15 +9,9 @@ const Input = ({ type, placeholder, dispatch, value, id, disabled = false }) => 
 			}`}
 			placeholder={placeholder}
 			disabled={disabled && id === "photoNo"}
-			required
 			value={value}
-			onChange={(e) =>
-				dispatch({
-					type: "UPDATE_FIELD",
-					field: e.target.name,
-					value: e.target.value,
-				})
-			}
+			onChange={onChange}
+			min={0}
 		/>
 	);
 };

@@ -12,110 +12,68 @@ const photoSizes = [
 	"10L",
 ];
 
-export const normalInputs = [
+export const inputs = [
 	{
+		id: "snapType",
 		label: "Snap Type",
 		options: ["Select One", "Snapshot", "Scan"],
 		type: "select",
-		id: "snapType",
+		isLab: false,
 	},
 	{
+		id: "photoNo",
 		label: "Photo No.",
 		placeholder: "DC/",
 		type: "text",
-		id: "photoNo",
+		isLab: false,
 	},
 	{
+		id: "photoSizePrint",
 		label: "Photo Size (Print)",
 		options: photoSizes,
 		type: "select",
-		id: "photoSizePrint",
+		isLab: false,
 	},
 	{
+		id: "quantity",
 		label: "Quantity",
 		placeholder: 0,
 		type: "number",
-		id: "quantity",
+		isLab: false,
 	},
 	{
+		id: "amount",
 		label: "Amount",
 		placeholder: 0,
 		type: "number",
-		id: "amount",
+		isLab: false,
 	},
 	{
+		id: "printType",
 		label: "Print Type",
 		options: ["Select One", "Normal", "Lab"],
 		type: "select",
-		id: "printType",
+		isLab: false,
 	},
-];
-
-export const labInputs = [
 	{
+		id: "deliveryType",
 		label: "Delivery Type",
 		options: ["Select One", "Non-Urgent", "Urgent"],
 		type: "select",
-		id: "deliveryType",
+		isLab: true,
 	},
 	{
+		id: "photoSizeLab",
 		label: "Photo Size (Lab)",
 		options: photoSizes,
 		type: "select",
-		id: "photoSizeLab",
+		isLab: true,
 	},
 	{
+		id: "labQuantity",
 		label: "Lab Quantity",
 		placeholder: 0,
 		type: "number",
-		id: "labQuantity",
+		isLab: true,
 	},
 ];
-
-export const initialState = {
-	snapType: {
-		value: "",
-		isValid: false,
-		errorMessage: "",
-	},
-	photoNo: {
-		value: "",
-		isValid: false,
-		errorMessage: "",
-	},
-	photoSizePrint: {
-		value: "",
-		isValid: false,
-		errorMessage: "",
-	},
-	quantity: {
-		value: 0,
-		isValid: false,
-		errorMessage: "",
-	},
-	amount: {
-		value: 0,
-		isValid: false,
-		errorMessage: "",
-	},
-	printType: {
-		value: "",
-		isValid: false,
-		errorMessage: "",
-	},
-	deliveryType: {
-		value: "",
-		isValid: false,
-		errorMessage: "",
-	},
-	photoSizeLab: {
-		value: "",
-		isValid: false,
-		errorMessage: "",
-	},
-	labQuantity: {
-		value: 0,
-		isValid: false,
-		errorMessage: "",
-	},
-};
