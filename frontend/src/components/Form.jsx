@@ -5,7 +5,7 @@ import { inputs } from "../constants";
 import { useState } from "react";
 import validateForm from "../utils/validate";
 
-const Form = () => {
+const Form = ({ setIncome }) => {
 	const [values, setValues] = useState({
 		snapType: "",
 		photoNo: "",
