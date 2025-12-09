@@ -19,12 +19,22 @@ export const saveTotalAmount = async (req, res, next) => {
 			{ new: true, upsert: true, setDefaultsOnInsert: true },
 		).lean();
 
-		return res
-			.status(200)
-			.json({
-				success: true,
-				data: { photoNo: req.body.photoNo, totalAmount: updated.totalAmount },
-			});
+		return res.status(200).json({
+			success: true,
+			data: { photoNo: req.body.photoNo || "Scan", totalAmount: updated.totalAmount },
+		});
+	} catch (err) {
+		return next(err);
+	}
+};
+
+export const getTotalAmount = async (req, res, next) => {
+	try {
+		const amountDoc = await Amount.findOne({}).lean();
+		res.status(200).json({
+			success: true,
+			data: { totalAmount: amountDoc ? amountDoc.totalAmount : 0 },
+		});
 	} catch (err) {
 		return next(err);
 	}

@@ -46,8 +46,9 @@ const Form = () => {
 				},
 				body: JSON.stringify(values),
 			});
-			const r = await response.json();
-			console.log(r);
+			const res = await response.json();
+			console.log(res);
+			setValues({});
 		} catch (error) {
 			console.error(error);
 		}
