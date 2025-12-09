@@ -4,7 +4,7 @@ import cors from "cors";
 
 import connectDatabase from "./database/mongodb.js";
 import { savePhotoDetails } from "./controllers/savePhoto.controller.js";
-import { saveTotalAmount } from "./controllers/amount.controller.js";
+import { getTotalAmount, saveTotalAmount } from "./controllers/amount.controller.js";
 
 const app = express();
 
@@ -13,9 +13,7 @@ dotenv.config();
 app.use(express.json());
 app.use(cors());
 
-app.get("/", (req, res) => {
-	res.send("Hello World");
-});
+app.get("/", getTotalAmount);
 
 app.post("/", savePhotoDetails, saveTotalAmount);
 
