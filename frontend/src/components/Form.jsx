@@ -39,13 +39,15 @@ const Form = () => {
 		}
 
 		try {
-			await fetch("http://localhost:3000", {
+			const response = await fetch("http://localhost:3000", {
 				method: "POST",
 				headers: {
 					"Content-Type": "application/json",
 				},
 				body: JSON.stringify(values),
 			});
+			const r = await response.json();
+			console.log(r);
 		} catch (error) {
 			console.error(error);
 		}
