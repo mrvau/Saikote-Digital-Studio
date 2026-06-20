@@ -10,7 +10,8 @@
 		"dev": "concurrently -k \"npm:dev:frontend\" \"npm:dev:electron\"",
 		"rebuild:electron": "electron-rebuild -f -w better-sqlite3 --module-dir backend",
 		"build:frontend": "npm run build --prefix frontend",
-		"build": "npm run build:frontend && npm run rebuild:electron && electron-builder"
+		"build": "npm run build:frontend && npm run rebuild:electron && electron-builder",
+		"build:win": "npm run build:frontend && npm run rebuild:electron && electron-builder --win"
 	},
 	"build": {
 		"appId": "com.saikote.digitalstudio",
@@ -27,8 +28,17 @@
 		"directories": {
 			"output": "release"
 		},
-		"win": { "target": "nsis", "icon": "build/icon.ico" },
-		"mac": { "target": "dmg", "icon": "build/icon.icns" },
-		"linux": { "target": "AppImage", "icon": "build/icon.png" }
+		"win": {
+			"target": "nsis",
+			"icon": "build/icon.ico"
+		},
+		"mac": {
+			"target": "dmg",
+			"icon": "build/icon.icns"
+		},
+		"linux": {
+			"target": "AppImage",
+			"icon": "build/icon.png"
+		}
 	}
 }
