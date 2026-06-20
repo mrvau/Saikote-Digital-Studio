@@ -1,55 +1,54 @@
-const validateForm = (formData) => {
+const toNumber = (value) => {
+	const n = Number(value);
+	return Number.isFinite(n) ? n : NaN;
+};
+
+export const validateOrder = (data) => {
 	const errors = {};
+	const quantity = toNumber(data.quantity);
+	const amount = toNumber(data.amount);
+	const labQuantity = data.printMethod === "Lab" ? toNumber(data.labQuantity) : null;
 
-	const {
-		snapType,
-		photoNo,
-		photoSizePrint,
-		quantity,
-		amount,
-		printType,
-		deliveryType,
-		photoSizeLab,
-		labQuantity,
-	} = formData;
-
-	if (snapType === "Select One") {
-		errors.snapType = "Please select a snap type.";
+	if (!data.snapType || !["Snapshot", "Scan"].includes(data.snapType)) {
+		errors.snapType = "Please select a valid snap type.";
 	}
-
-	if (snapType === "Snapshot" && (!photoNo || !photoNo.trim())) {
+	if (data.snapType === "Snapshot" && (!data.photoNo || !data.photoNo.trim())) {
 		errors.photoNo = "Photo No. is required for Snapshot.";
 	}
-
-	if (photoSizePrint === "Select One") {
-		errors.photoSizePrint = "Please select a photo size for Print.";
+	if (!data.photoSize || !data.photoSize.trim()) {
+		errors.photoSize = "Please select a photo size.";
 	}
-
-	if (!quantity || quantity <= 0) {
+	if (!Number.isFinite(quantity) || quantity <= 0) {
 		errors.quantity = "Quantity must be greater than zero.";
 	}
+	if (!Number.isFinite(amount) || amount <= 0) {
+		errors.amount = "Amount must be greater than zero.";
+	}
+	if (!data.printMethod || !["Normal", "Lab"].includes(data.printMethod)) {
+		errors.printMethod = "Please select a valid print method.";
+	}
+	if (data.printMethod === "Lab") {
+		if (!data.printType) errors.printType = "Please select a print type.";
+		if (!data.deliveryType) errors.deliveryType = "Please select a delivery type.";
+		if (!data.labPhotoSize) errors.labPhotoSize = "Please select a lab photo size.";
+		if (!Number.isFinite(labQuantity) || labQuantity <= 0) {
+			errors.labQuantity = "Lab quantity must be greater than zero.";
+		}
+	}
 
-	if (!amount || amount <= 0) {
+	return { errors, data: { ...data, quantity, amount, labQuantity } };
+};
+
+export const validateExpense = (data) => {
+	const errors = {};
+	const amount = toNumber(data.amount);
+
+	if (!data.expenseType || !data.expenseType.trim()) {
+		errors.expenseType = "Expense type is required.";
+	}
+	if (!Number.isFinite(amount) || amount <= 0) {
 		errors.amount = "Amount must be greater than zero.";
 	}
 
-	if (printType === "Select One") {
-		errors.printType = "Please select a print type.";
-	}
-
-	if (printType === "Lab") {
-		if (deliveryType === "Select One") {
-			errors.deliveryType = "Please select a delivery type for Lab prints.";
-		}
-		if (photoSizeLab === "Select One") {
-			errors.photoSizeLab = "Please select a photo size for Lab prints.";
-		}
-		if (!labQuantity || labQuantity <= 0) {
-			errors.labQuantity = "Lab Quantity must be greater than zero.";
-		}
-	}
-
-	return errors;
+	return { errors, data: { ...data, amount } };
 };
-
-export default validateForm;

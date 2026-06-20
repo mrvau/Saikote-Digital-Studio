@@ -1,15 +1,4 @@
-const normalPhotoSizes = [
-	"Stamp",
-	"Passport",
-	"DV",
-	"3R",
-	"4R",
-	"5R",
-	"6R",
-	"8R",
-	"10R",
-	"10L",
-];
+const normalPhotoSizes = ["Stamp", "Passport", "DV", "3R", "4R", "5R", "6R", "8R", "10R", "10L"];
 
 const labPhotoSizes = ["3R", "4R", "5R", "6R", "8R", "10R", "10L"];
 
@@ -75,6 +64,21 @@ export const labInputs = [
 		id: "labQuantity",
 		label: "Lab Quantity",
 		placeholder: 1,
+		type: "number",
+	},
+];
+
+export const expenseInputs = [
+	{
+		id: "expenseType",
+		label: "Expense Type",
+		placeholder: "Breakfast",
+		type: "text",
+	},
+	{
+		id: "expenseAmount",
+		label: "Expense Amount",
+		placeholder: 30,
 		type: "number",
 	},
 ];

@@ -1,13 +1,17 @@
 import Input from "./Input";
 import Select from "./Select";
 import Button from "./Button";
-import { useReducer } from "react";
+import { useReducer, useEffect, useState } from "react";
+import { useParams, useNavigate, Link } from "react-router-dom";
 import { normalInputs, labInputs } from "../constants";
+import { getOrder, createOrder, updateOrder } from "../api/client";
 
 const updateState = (state, action) => {
 	switch (action.type) {
 		case "UPDATE_FIELD":
 			return { ...state, [action.field]: action.value };
+		case "LOAD":
+			return { ...state, ...action.payload };
 		case "RESET":
 			return action.initialState;
 		default:
@@ -29,33 +33,45 @@ const initialState = {
 };
 
 const Form = () => {
+	const { id } = useParams();
+	const navigate = useNavigate();
+	const isEditing = Boolean(id);
 	const [state, dispatch] = useReducer(updateState, initialState);
+	const [errors, setErrors] = useState({});
+	const [loading, setLoading] = useState(isEditing);
+
+	useEffect(() => {
+		if (!isEditing) return;
+		getOrder(id)
+			.then((res) => dispatch({ type: "LOAD", payload: res.data }))
+			.catch((error) => alert(`Couldn't load that order: ${error.message}`))
+			.finally(() => setLoading(false));
+	}, [id, isEditing]);
 
 	const handleSubmit = async (e) => {
 		e.preventDefault();
+		setErrors({});
 		try {
-			const response = await fetch("http://localhost:5000/", {
-				method: "POST",
-				headers: {
-					"Content-Type": "application/json",
-				},
-				body: JSON.stringify(state),
-			});
-
-			const result = await response.json();
-
-			if (!response.ok) {
-				alert(`Error: ${result.message || "Failed to save photo details"}`);
-				return;
+			if (isEditing) {
+				await updateOrder(id, state);
+				navigate("/documents");
+			} else {
+				await createOrder(state);
+				alert("Order saved.");
+				dispatch({ type: "RESET", initialState });
 			}
-
-			alert("Success! " + result.message);
-			dispatch({ type: "RESET", initialState });
 		} catch (error) {
-			console.error("Error submitting form:", error);
-			alert("An error occurred while submitting the form. Is the backend running?");
+			if (error.errors) {
+				setErrors(error.errors);
+			} else {
+				alert(error.message || "Something went wrong saving the order.");
+			}
 		}
 	};
+
+	if (loading) {
+		return <p className="text-[#888888] text-center">Loading order…</p>;
+	}
 
 	return (
 		<form
@@ -83,6 +99,9 @@ const Form = () => {
 							value={state[input.id]}
 						/>
 					)}
+					{errors[input.id] && (
+						<p className="text-[#e08b8b] text-sm mt-1 text-left">{errors[input.id]}</p>
+					)}
 				</div>
 			))}
 
@@ -108,9 +127,24 @@ const Form = () => {
 								value={state[input.id]}
 							/>
 						)}
+						{errors[input.id] && (
+							<p className="text-[#e08b8b] text-sm mt-1 text-left">
+								{errors[input.id]}
+							</p>
+						)}
 					</div>
 				))}
-			<Button />
+
+			<div className="flex gap-3 justify-center">
+				<Button>{isEditing ? "Update order" : "Save order"}</Button>
+				{isEditing && (
+					<Link
+						to="/documents"
+						className="font-bold text-center bg-[#333333] w-3xl my-4 py-1 rounded-sm cursor-pointer flex items-center justify-center">
+						Cancel
+					</Link>
+				)}
+			</div>
 		</form>
 	);
 };

@@ -1,18 +1,47 @@
-import { useEffect, useRef } from "react";
+import { useEffect, useState } from "react";
+import { NavLink } from "react-router-dom";
+import { getDailySummary } from "../api/client";
+
+const navLinkClass = ({ isActive }) =>
+	`hover:text-white transition-colors ${isActive ? "text-white" : "text-[#888888]"}`;
 
 const Navbar = () => {
-	const incomeRef = useRef();
+	const [summary, setSummary] = useState(null);
+
 	useEffect(() => {
-		const getTotalIncome = async () => {
-			const response = await fetch("http://localhost:5000");
-			const res = await response.json();
-			incomeRef.current.innerHTML = res.data.totalAmount;
-		};
-		getTotalIncome();
-	}, []);
+		getDailySummary()
+			.then((res) => setSummary(res.data))
+			.catch((error) => console.error("Failed to load today's summary:", error));
+	});
+
 	return (
-		<div className="font-bold text-white mb-6 text-right w-5xl">
-			Total Income: <span ref={incomeRef}>0</span>
+		<div className="w-5xl mb-8 flex justify-between items-end">
+			<nav className="flex gap-6 font-bold text-[#cccccc]">
+				<NavLink to="/" end className={navLinkClass}>
+					New order
+				</NavLink>
+				<NavLink to="/expenses" className={navLinkClass}>
+					New expense
+				</NavLink>
+				<NavLink to="/documents" className={navLinkClass}>
+					Documents
+				</NavLink>
+				<NavLink to="/reports" className={navLinkClass}>
+					Reports
+				</NavLink>
+			</nav>
+			<div className="text-right text-sm">
+				<div className="text-[#888888] mb-1">Today</div>
+				{summary ? (
+					<div className="flex gap-4 font-bold">
+						<span className="text-[#7ed9a8]">+{summary.income}</span>
+						<span className="text-[#e08b8b]">-{summary.expense}</span>
+						<span className="text-white">Net {summary.net}</span>
+					</div>
+				) : (
+					<div className="text-[#888888]">Loading…</div>
+				)}
+			</div>
 		</div>
 	);
 };
