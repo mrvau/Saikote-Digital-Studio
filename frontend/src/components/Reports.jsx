@@ -1,6 +1,8 @@
 import { useEffect, useState } from "react";
 import { getDailySummary, getMonthlySummary, getYearlySummary, getOrders, getExpenses } from "../api/client";
 import { downloadCsv } from "../utils/csv";
+import { useToast } from "../hooks/useToast";
+import Toast from "./Toast";
 
 const today = () => new Date().toLocaleDateString("sv-SE");
 
@@ -18,6 +20,7 @@ const Reports = () => {
 	const [summary, setSummary] = useState(null);
 	const [loading, setLoading] = useState(true);
 	const [exporting, setExporting] = useState(false);
+	const { toast, showToast } = useToast();
 
 	useEffect(() => {
 		setLoading(true);
@@ -32,7 +35,6 @@ const Reports = () => {
 			.finally(() => setLoading(false));
 	}, [range, date, month, year]);
 
-	// Bounds matching whichever tab is selected, and a label to use in the exported filename.
 	const getRangeBounds = () => {
 		if (range === "day") return { from: date, to: date, label: date };
 		if (range === "month") {
@@ -61,89 +63,90 @@ const Reports = () => {
 					order.amount,
 				]);
 			});
-			// Expenses are written as negative amounts, so summing the Amount column
-			// in a spreadsheet gives the net total directly.
 			expensesRes.data.forEach((expense) => {
 				rows.push([expense.createdAt, "Expense", expense.expenseType, -expense.amount]);
 			});
 
 			downloadCsv(`saikote-${range}-${label}.csv`, rows);
 		} catch (error) {
-			alert(error.message || "Couldn't export CSV.");
+			showToast(error.message || "Couldn't export CSV.", "error");
 		} finally {
 			setExporting(false);
 		}
 	};
 
 	return (
-		<div className="bg-[#222222] rounded-md text-[#cccccc] w-5xl p-6">
-			<div className="flex justify-between items-center mb-6">
-				<div className="flex gap-2">
-					{RANGE_TABS.map((tab) => (
-						<button
-							key={tab.key}
-							onClick={() => setRange(tab.key)}
-							className={`px-4 py-1 rounded-sm font-bold cursor-pointer ${
-								range === tab.key ? "bg-[#382798] text-white" : "bg-[#333333] text-[#888888]"
-							}`}>
-							{tab.label}
-						</button>
-					))}
+		<>
+			<div className="bg-[#222222] rounded-md text-[#cccccc] w-5xl p-6">
+				<div className="flex justify-between items-center mb-6">
+					<div className="flex gap-2">
+						{RANGE_TABS.map((tab) => (
+							<button
+								key={tab.key}
+								onClick={() => setRange(tab.key)}
+								className={`px-4 py-1 rounded-sm font-bold cursor-pointer ${
+									range === tab.key ? "bg-[#382798] text-white" : "bg-[#333333] text-[#888888]"
+								}`}>
+								{tab.label}
+							</button>
+						))}
+					</div>
+					<button
+						onClick={handleExport}
+						disabled={exporting}
+						className="px-4 py-1 rounded-sm font-bold cursor-pointer bg-[#333333] text-[#cccccc] hover:bg-[#3a3a3a] disabled:opacity-50 disabled:cursor-not-allowed">
+						{exporting ? "Exporting…" : "Export CSV"}
+					</button>
 				</div>
-				<button
-					onClick={handleExport}
-					disabled={exporting}
-					className="px-4 py-1 rounded-sm font-bold cursor-pointer bg-[#333333] text-[#cccccc] hover:bg-[#3a3a3a] disabled:opacity-50 disabled:cursor-not-allowed">
-					{exporting ? "Exporting…" : "Export CSV"}
-				</button>
-			</div>
 
-			<div className="mb-8">
-				{range === "day" && (
-					<input
-						type="date"
-						value={date}
-						onChange={(e) => setDate(e.target.value)}
-						className="bg-[#333333] rounded-sm py-2 px-3 outline-none"
-					/>
-				)}
-				{range === "month" && (
-					<input
-						type="month"
-						value={month}
-						onChange={(e) => setMonth(e.target.value)}
-						className="bg-[#333333] rounded-sm py-2 px-3 outline-none"
-					/>
-				)}
-				{range === "year" && (
-					<input
-						type="number"
-						value={year}
-						onChange={(e) => setYear(e.target.value)}
-						className="bg-[#333333] rounded-sm py-2 px-3 outline-none w-28"
-					/>
-				)}
-			</div>
-
-			{loading || !summary ? (
-				<p className="text-[#888888]">Loading…</p>
-			) : (
-				<div className="grid grid-cols-3 gap-4">
-					<div className="bg-[#1d3a2f] rounded-md p-5">
-						<div className="text-[#7ed9a8] text-sm font-bold mb-1">Income</div>
-						<div className="text-2xl font-bold text-white">{summary.income}</div>
-					</div>
-					<div className="bg-[#3a1d1d] rounded-md p-5">
-						<div className="text-[#e08b8b] text-sm font-bold mb-1">Expense</div>
-						<div className="text-2xl font-bold text-white">{summary.expense}</div>
-					</div>
-					<div className="bg-[#2a2a2a] rounded-md p-5">
-						<div className="text-[#cccccc] text-sm font-bold mb-1">Net</div>
-						<div className="text-2xl font-bold text-white">{summary.net}</div>
-					</div>
+				<div className="mb-8">
+					{range === "day" && (
+						<input
+							type="date"
+							value={date}
+							onChange={(e) => setDate(e.target.value)}
+							className="bg-[#333333] rounded-sm py-2 px-3 outline-none"
+						/>
+					)}
+					{range === "month" && (
+						<input
+							type="month"
+							value={month}
+							onChange={(e) => setMonth(e.target.value)}
+							className="bg-[#333333] rounded-sm py-2 px-3 outline-none"
+						/>
+					)}
+					{range === "year" && (
+						<input
+							type="number"
+							value={year}
+							onChange={(e) => setYear(e.target.value)}
+							className="bg-[#333333] rounded-sm py-2 px-3 outline-none w-28"
+						/>
+					)}
 				</div>
-			)}
-		</div>
+
+				{loading || !summary ? (
+					<p className="text-[#888888]">Loading…</p>
+				) : (
+					<div className="grid grid-cols-3 gap-4">
+						<div className="bg-[#1d3a2f] rounded-md p-5">
+							<div className="text-[#7ed9a8] text-sm font-bold mb-1">Income</div>
+							<div className="text-2xl font-bold text-white">{summary.income}</div>
+						</div>
+						<div className="bg-[#3a1d1d] rounded-md p-5">
+							<div className="text-[#e08b8b] text-sm font-bold mb-1">Expense</div>
+							<div className="text-2xl font-bold text-white">{summary.expense}</div>
+						</div>
+						<div className="bg-[#2a2a2a] rounded-md p-5">
+							<div className="text-[#cccccc] text-sm font-bold mb-1">Net</div>
+							<div className="text-2xl font-bold text-white">{summary.net}</div>
+						</div>
+					</div>
+				)}
+			</div>
+			<Toast toast={toast} />
+		</>
 	);
 };
 

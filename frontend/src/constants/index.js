@@ -1,4 +1,4 @@
-const normalPhotoSizes = ["Stamp", "Passport", "DV", "3R", "4R", "5R", "6R", "8R", "10R", "10L"];
+const normalPhotoSizes = ["Soft Copy", "Stamp", "Passport", "DV", "3R", "4R", "5R", "6R", "8R", "10R", "10L"];
 
 const labPhotoSizes = ["3R", "4R", "5R", "6R", "8R", "10R", "10L"];
 

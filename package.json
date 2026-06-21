@@ -40,5 +40,12 @@
 			"target": "AppImage",
 			"icon": "build/icon.png"
 		}
+	},
+	"devDependencies": {
+		"@electron/rebuild": "^4.0.4",
+		"concurrently": "^10.0.3",
+		"electron": "^42.4.1",
+		"electron-builder": "^26.15.3",
+		"wait-on": "^9.0.10"
 	}
 }

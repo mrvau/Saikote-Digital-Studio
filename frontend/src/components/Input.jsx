@@ -1,4 +1,4 @@
-const Input = ({ type, placeholder, dispatch, value, id, disabled = false }) => {
+const Input = ({ type, placeholder, dispatch, value, id, disabled = false, step="1" }) => {
 	return (
 		<input
 			id={id}
@@ -18,6 +18,7 @@ const Input = ({ type, placeholder, dispatch, value, id, disabled = false }) => 
 				})
 			}
 			min={0}
+			step={step}
 		/>
 	);
 };
