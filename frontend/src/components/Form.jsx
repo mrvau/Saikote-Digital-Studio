@@ -1,10 +1,12 @@
 import Input from "./Input";
 import Select from "./Select";
 import Button from "./Button";
+import Toast from "./Toast";
 import { useReducer, useEffect, useState } from "react";
 import { useParams, useNavigate, Link } from "react-router-dom";
 import { normalInputs, labInputs } from "../constants";
 import { getOrder, createOrder, updateOrder } from "../api/client";
+import { useToast } from "../hooks/useToast";
 
 const updateState = (state, action) => {
 	switch (action.type) {
@@ -39,14 +41,18 @@ const Form = () => {
 	const [state, dispatch] = useReducer(updateState, initialState);
 	const [errors, setErrors] = useState({});
 	const [loading, setLoading] = useState(isEditing);
+	const { toast, showToast } = useToast();
 
 	useEffect(() => {
 		if (!isEditing) return;
 		getOrder(id)
 			.then((res) => dispatch({ type: "LOAD", payload: res.data }))
-			.catch((error) => alert(`Couldn't load that order: ${error.message}`))
+			.catch((error) => {
+				console.error("Couldn't load order:", error);
+				navigate("/documents");
+			})
 			.finally(() => setLoading(false));
-	}, [id, isEditing]);
+	}, [id, isEditing, navigate]);
 
 	const handleSubmit = async (e) => {
 		e.preventDefault();
@@ -57,14 +63,14 @@ const Form = () => {
 				navigate("/documents");
 			} else {
 				await createOrder(state);
-				alert("Order saved.");
+				showToast("Order saved.");
 				dispatch({ type: "RESET", initialState });
 			}
 		} catch (error) {
 			if (error.errors) {
 				setErrors(error.errors);
 			} else {
-				alert(error.message || "Something went wrong saving the order.");
+				showToast(error.message || "Something went wrong saving the order.", "error");
 			}
 		}
 	};
@@ -74,39 +80,11 @@ const Form = () => {
 	}
 
 	return (
-		<form
-			onSubmit={handleSubmit}
-			className="bg-[#222222] px-5 py-4 rounded-md text-[#cccccc] text-center w-5xl">
-			{normalInputs.map((input, index) => (
-				<div className="mb-5" key={index}>
-					<label htmlFor={input.id} className="block mb-2">
-						{input.label}
-					</label>
-					{input.type === "select" ? (
-						<Select
-							options={input.options}
-							id={input.id}
-							dispatch={dispatch}
-							value={state[input.id]}
-						/>
-					) : (
-						<Input
-							id={input.id}
-							type={input.type}
-							placeholder={input.placeholder}
-							disabled={state.snapType === "Scan" && input.id === "photoNo"}
-							dispatch={dispatch}
-							value={state[input.id]}
-						/>
-					)}
-					{errors[input.id] && (
-						<p className="text-[#e08b8b] text-sm mt-1 text-left">{errors[input.id]}</p>
-					)}
-				</div>
-			))}
-
-			{state.printMethod === "Lab" &&
-				labInputs.map((input, index) => (
+		<>
+			<form
+				onSubmit={handleSubmit}
+				className="bg-[#222222] px-5 py-4 rounded-md text-[#cccccc] text-center w-5xl">
+				{normalInputs.map((input, index) => (
 					<div className="mb-5" key={index}>
 						<label htmlFor={input.id} className="block mb-2">
 							{input.label}
@@ -123,29 +101,58 @@ const Form = () => {
 								id={input.id}
 								type={input.type}
 								placeholder={input.placeholder}
+								disabled={state.snapType === "Scan" && input.id === "photoNo"}
 								dispatch={dispatch}
 								value={state[input.id]}
 							/>
 						)}
 						{errors[input.id] && (
-							<p className="text-[#e08b8b] text-sm mt-1 text-left">
-								{errors[input.id]}
-							</p>
+							<p className="text-[#e08b8b] text-sm mt-1 text-left">{errors[input.id]}</p>
 						)}
 					</div>
 				))}
 
-			<div className="flex gap-3 justify-center">
-				<Button>{isEditing ? "Update order" : "Save order"}</Button>
-				{isEditing && (
-					<Link
-						to="/documents"
-						className="font-bold text-center bg-[#333333] w-3xl my-4 py-1 rounded-sm cursor-pointer flex items-center justify-center">
-						Cancel
-					</Link>
-				)}
-			</div>
-		</form>
+				{state.printMethod === "Lab" &&
+					labInputs.map((input, index) => (
+						<div className="mb-5" key={index}>
+							<label htmlFor={input.id} className="block mb-2">
+								{input.label}
+							</label>
+							{input.type === "select" ? (
+								<Select
+									options={input.options}
+									id={input.id}
+									dispatch={dispatch}
+									value={state[input.id]}
+								/>
+							) : (
+								<Input
+									id={input.id}
+									type={input.type}
+									placeholder={input.placeholder}
+									dispatch={dispatch}
+									value={state[input.id]}
+								/>
+							)}
+							{errors[input.id] && (
+								<p className="text-[#e08b8b] text-sm mt-1 text-left">{errors[input.id]}</p>
+							)}
+						</div>
+					))}
+
+				<div className="flex gap-3 justify-center">
+					<Button>{isEditing ? "Update order" : "Save order"}</Button>
+					{isEditing && (
+						<Link
+							to="/documents"
+							className="font-bold text-center bg-[#333333] w-3xl my-4 py-1 rounded-sm cursor-pointer flex items-center justify-center">
+							Cancel
+						</Link>
+					)}
+				</div>
+			</form>
+			<Toast toast={toast} />
+		</>
 	);
 };
 
