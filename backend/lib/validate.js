@@ -43,12 +43,26 @@ export const validateExpense = (data) => {
 	const errors = {};
 	const amount = toNumber(data.amount);
 
-	if (!data.expenseType || !data.expenseType.trim()) {
+	// Category is required and must be one of the two allowed values
+	if (!data.category || !["salary", "shop_expense"].includes(data.category)) {
+		errors.category = "Please select a valid category.";
+	}
+
+	// Expense type is only required for shop expenses
+	if (data.category === "shop_expense" && (!data.expenseType || !data.expenseType.trim())) {
 		errors.expenseType = "Expense type is required.";
 	}
+
 	if (!Number.isFinite(amount) || amount <= 0) {
 		errors.amount = "Amount must be greater than zero.";
 	}
 
-	return { errors, data: { ...data, amount } };
+	return {
+		errors,
+		data: {
+			...data,
+			amount,
+			expenseType: data.category === "salary" ? null : data.expenseType,
+		},
+	};
 };

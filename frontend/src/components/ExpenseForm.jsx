@@ -1,4 +1,5 @@
 import Input from "./Input";
+import Select from "./Select";
 import Button from "./Button";
 import Toast from "./Toast";
 import { useReducer, useEffect, useState } from "react";
@@ -20,9 +21,14 @@ const updateState = (state, action) => {
 };
 
 const initialState = {
+	category: "",
 	expenseType: "",
 	amount: "",
 };
+
+const CATEGORY_OPTIONS = ["Salary", "Shop Expense"];
+const CATEGORY_MAP = { Salary: "salary", "Shop Expense": "shop_expense" };
+const CATEGORY_REVERSE = { salary: "Salary", shop_expense: "Shop Expense" };
 
 const ExpenseForm = () => {
 	const { id } = useParams();
@@ -36,7 +42,17 @@ const ExpenseForm = () => {
 	useEffect(() => {
 		if (!isEditing) return;
 		getExpense(id)
-			.then((res) => dispatch({ type: "LOAD", payload: res.data }))
+			.then((res) => {
+				const data = res.data;
+				dispatch({
+					type: "LOAD",
+					payload: {
+						...data,
+						// Map DB value back to display label for the Select component
+						category: CATEGORY_REVERSE[data.category] || "",
+					},
+				});
+			})
 			.catch((error) => {
 				console.error("Couldn't load expense:", error);
 				navigate("/documents");
@@ -44,15 +60,23 @@ const ExpenseForm = () => {
 			.finally(() => setLoading(false));
 	}, [id, isEditing, navigate]);
 
+	const isSalary = CATEGORY_MAP[state.category] === "salary";
+
 	const handleSubmit = async (e) => {
 		e.preventDefault();
 		setErrors({});
+		// Map the display label to the DB value before sending
+		const payload = {
+			...state,
+			category: CATEGORY_MAP[state.category] || state.category,
+			expenseType: isSalary ? null : state.expenseType,
+		};
 		try {
 			if (isEditing) {
-				await updateExpense(id, state);
+				await updateExpense(id, payload);
 				navigate("/documents");
 			} else {
-				await createExpense(state);
+				await createExpense(payload);
 				showToast("Expense saved.");
 				dispatch({ type: "RESET", initialState });
 			}
@@ -74,21 +98,41 @@ const ExpenseForm = () => {
 			<form
 				onSubmit={handleSubmit}
 				className="bg-[#222222] px-5 py-4 rounded-md text-[#cccccc] text-center w-5xl">
+				{/* Category selector */}
 				<div className="mb-5">
-					<label htmlFor="expenseType" className="block mb-2">
-						Expense type
+					<label htmlFor="category" className="block mb-2">
+						Category
 					</label>
-					<Input
-						id="expenseType"
-						type="text"
-						placeholder="Chemicals, rent, electricity…"
+					<Select
+						id="category"
+						options={CATEGORY_OPTIONS}
 						dispatch={dispatch}
-						value={state.expenseType}
+						value={state.category}
 					/>
-					{errors.expenseType && (
-						<p className="text-[#e08b8b] text-sm mt-1 text-left">{errors.expenseType}</p>
+					{errors.category && (
+						<p className="text-[#e08b8b] text-sm mt-1 text-left">{errors.category}</p>
 					)}
 				</div>
+
+				{/* Expense type — only shown for Shop Expense */}
+				{!isSalary && (
+					<div className="mb-5">
+						<label htmlFor="expenseType" className="block mb-2">
+							Expense type
+						</label>
+						<Input
+							id="expenseType"
+							type="text"
+							placeholder="Chemicals, rent, electricity…"
+							dispatch={dispatch}
+							value={state.expenseType}
+						/>
+						{errors.expenseType && (
+							<p className="text-[#e08b8b] text-sm mt-1 text-left">{errors.expenseType}</p>
+						)}
+					</div>
+				)}
+
 				<div className="mb-5">
 					<label htmlFor="amount" className="block mb-2">
 						Amount
