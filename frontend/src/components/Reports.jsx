@@ -64,7 +64,13 @@ const Reports = () => {
 				]);
 			});
 			expensesRes.data.forEach((expense) => {
-				rows.push([expense.createdAt, "Expense", expense.expenseType, -expense.amount]);
+				const isSalary = expense.category === "salary";
+				rows.push([
+					expense.createdAt,
+					isSalary ? "Salary" : "Expense",
+					isSalary ? "Salary" : expense.expenseType,
+					-expense.amount,
+				]);
 			});
 
 			downloadCsv(`saikote-${range}-${label}.csv`, rows);

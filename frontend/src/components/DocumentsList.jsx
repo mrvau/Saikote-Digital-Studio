@@ -13,6 +13,7 @@ const KIND_TABS = [
 	{ key: "all", label: "All" },
 	{ key: "order", label: "Orders" },
 	{ key: "expense", label: "Expenses" },
+	{ key: "salary", label: "Salary" },
 ];
 
 const DocumentsList = () => {
@@ -40,8 +41,8 @@ const DocumentsList = () => {
 			}));
 			const expenses = expensesRes.data.map((expense) => ({
 				...expense,
-				kind: "expense",
-				summary: expense.expenseType,
+				kind: expense.category === "salary" ? "salary" : "expense",
+				summary: expense.category === "salary" ? "Salary" : expense.expenseType,
 			}));
 			const merged = [...orders, ...expenses].sort(
 				(a, b) => toDate(b.createdAt) - toDate(a.createdAt),
@@ -78,9 +79,10 @@ const DocumentsList = () => {
 		}
 	};
 
+	const kindLabels = { order: "orders", expense: "expenses", salary: "salary records" };
 	const emptyMessage =
 		filterKind !== "all"
-			? `No ${filterKind === "order" ? "orders" : "expenses"} found${filterDate ? ` for ${filterDate}` : ""}.`
+			? `No ${kindLabels[filterKind] || filterKind} found${filterDate ? ` for ${filterDate}` : ""}.`
 			: filterDate
 				? `No records found for ${filterDate}.`
 				: "No orders or expenses yet — add one to see it here.";
@@ -164,14 +166,20 @@ const DocumentsList = () => {
 								className={`text-xs font-bold px-2 py-1 rounded-sm w-fit ${
 									doc.kind === "order"
 										? "bg-[#1d3a2f] text-[#7ed9a8]"
-										: "bg-[#3a1d1d] text-[#e08b8b]"
+										: doc.kind === "salary"
+											? "bg-[#3a351d] text-[#e0c97d]"
+											: "bg-[#3a1d1d] text-[#e08b8b]"
 								}`}>
-								{doc.kind === "order" ? "Order" : "Expense"}
+								{doc.kind === "order" ? "Order" : doc.kind === "salary" ? "Salary" : "Expense"}
 							</span>
 							<span>{doc.summary}</span>
 							<span
 								className={
-									doc.kind === "order" ? "text-[#7ed9a8]" : "text-[#e08b8b]"
+									doc.kind === "order"
+										? "text-[#7ed9a8]"
+										: doc.kind === "salary"
+											? "text-[#e0c97d]"
+											: "text-[#e08b8b]"
 								}>
 								{doc.kind === "order" ? "+" : "-"}
 								{doc.amount}
@@ -199,7 +207,7 @@ const DocumentsList = () => {
 
 			<ConfirmDialog
 				open={Boolean(confirmTarget)}
-				message={`Delete this ${confirmTarget?.kind === "order" ? "order" : "expense"}? This can't be undone.`}
+				message={`Delete this ${confirmTarget?.kind === "order" ? "order" : confirmTarget?.kind === "salary" ? "salary entry" : "expense"}? This can't be undone.`}
 				onConfirm={handleConfirmDelete}
 				onCancel={() => setConfirmTarget(null)}
 			/>

@@ -8,8 +8,8 @@ import {
 } from "../models/expense.model.js";
 
 export const listExpenses = (req, res) => {
-	const { from, to } = req.query;
-	res.json({ success: true, data: getAllExpenses({ from, to }) });
+	const { from, to, category } = req.query;
+	res.json({ success: true, data: getAllExpenses({ from, to, category }) });
 };
 
 export const getExpense = (req, res) => {
