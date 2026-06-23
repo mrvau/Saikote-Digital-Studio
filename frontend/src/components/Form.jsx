@@ -104,7 +104,7 @@ const Form = () => {
 								disabled={state.snapType === "Scan" && input.id === "photoNo"}
 								dispatch={dispatch}
 								value={state[input.id]}
-								step={input.id === "quantity" ? "2" : input.id === "amount" ? "10" : "1"}
+								step={input.id === "amount" ? "10" : "1"}
 							/>
 						)}
 						{errors[input.id] && (
