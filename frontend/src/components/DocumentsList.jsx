@@ -1,6 +1,6 @@
-import { useEffect, useState, useCallback } from "react";
+import { useEffect, useState, useCallback, useMemo } from "react";
 import { Link } from "react-router-dom";
-import { getOrders, getExpenses, deleteOrder, deleteExpense } from "../api/client";
+import { getOrders, getExpenses, deleteOrder, deleteExpense, getMonthlySummary } from "../api/client";
 import { useToast } from "../hooks/useToast";
 import Toast from "./Toast";
 import ConfirmDialog from "./ConfirmDialog";
@@ -23,17 +23,29 @@ const DocumentsList = () => {
 	const [confirmTarget, setConfirmTarget] = useState(null);
 	const [filterDate, setFilterDate] = useState(todayString());
 	const [filterKind, setFilterKind] = useState("all"); // "all" | "order" | "expense"
+	const [monthlySalary, setMonthlySalary] = useState(0);
 	const { toast, showToast } = useToast();
 
-	const load = useCallback(async (date) => {
+	const load = useCallback(async (date, kind) => {
 		setLoading(true);
 		setError(null);
 		try {
-			const params = date ? { from: date, to: date } : {};
-			const [ordersRes, expensesRes] = await Promise.all([
+			let params = date ? { from: date, to: date } : {};
+			if (kind === "salary" && date) {
+				const month = date.slice(0, 7);
+				const lastDay = new Date(month.slice(0, 4), month.slice(5, 7), 0).getDate();
+				params = { from: `${month}-01`, to: `${month}-${lastDay}` };
+			}
+			const monthStr = date ? date.slice(0, 7) : todayString().slice(0, 7);
+			
+			const [ordersRes, expensesRes, summaryRes] = await Promise.all([
 				getOrders(params),
 				getExpenses(params),
+				getMonthlySummary(monthStr),
 			]);
+			
+			setMonthlySalary(summaryRes.data.salary || 0);
+
 			const orders = ordersRes.data.map((order) => ({
 				...order,
 				kind: "order",
@@ -56,13 +68,24 @@ const DocumentsList = () => {
 	}, []);
 
 	useEffect(() => {
-		load(filterDate);
-	}, [load, filterDate]);
+		load(filterDate, filterKind);
+	}, [load, filterDate, filterKind]);
 
 	// Kind filtering is applied client-side — no extra API call needed
 	// since the data is already loaded and kind is a property on every row.
 	const visibleDocuments =
 		filterKind === "all" ? documents : documents.filter((d) => d.kind === filterKind);
+
+	const totals = useMemo(() => {
+		if (!filterDate) return null;
+		let income = 0;
+		let expense = 0;
+		for (const doc of documents) {
+			if (doc.kind === "order") income += doc.amount;
+			else expense += doc.amount;
+		}
+		return { income, expense, net: income - expense };
+	}, [documents, filterDate]);
 
 	const handleConfirmDelete = async () => {
 		const doc = confirmTarget;
@@ -113,9 +136,16 @@ const DocumentsList = () => {
 
 					{/* Date filter */}
 					<input
-						type="date"
-						value={filterDate}
-						onChange={(e) => setFilterDate(e.target.value)}
+						type={filterKind === "salary" ? "month" : "date"}
+						value={filterKind === "salary" ? filterDate.slice(0, 7) : (filterDate.length === 7 ? `${filterDate}-01` : filterDate)}
+						onChange={(e) => {
+							const val = e.target.value;
+							if (filterKind === "salary") {
+								setFilterDate(val ? `${val}-01` : "");
+							} else {
+								setFilterDate(val);
+							}
+						}}
 						className="bg-[#333333] rounded-sm py-1.5 px-3 outline-none text-sm text-[#cccccc]"
 					/>
 					<button
@@ -202,6 +232,23 @@ const DocumentsList = () => {
 							</span>
 						</div>
 					))
+				)}
+
+				{/* Totals Footer */}
+				{!loading && !error && (filterKind === "salary" || filterDate) && (
+					<div className="px-5 py-4 bg-[#1a1a1a] border-t border-[#333333] flex gap-8 font-bold text-sm items-center">
+						{filterKind === "salary" ? (
+							<span className="text-[#e0c97d]">Monthly Total Salary: {monthlySalary}</span>
+						) : filterDate ? (
+							<>
+								<span className="text-[#7ed9a8]">Total Income: {totals?.income || 0}</span>
+								<span className="text-[#e08b8b]">Total Expense: {totals?.expense || 0}</span>
+								<span className={totals?.net >= 0 ? "text-[#7ed9a8]" : "text-[#e08b8b] ml-auto"}>
+									Net: {totals?.net > 0 ? "+" : ""}{totals?.net || 0}
+								</span>
+							</>
+						) : null}
+					</div>
 				)}
 			</div>
 

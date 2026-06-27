@@ -8,7 +8,8 @@ const sumWhere = (table, whereClause, params) =>
 const buildSummary = (label, value, whereClause, params) => {
 	const income = sumWhere("orders", whereClause, params);
 	const expense = sumWhere("expenses", whereClause, params);
-	return { [label]: value, income, expense, net: income - expense };
+	const salary = sumWhere("expenses", `(${whereClause}) AND category = 'salary'`, params);
+	return { [label]: value, income, expense, salary, net: income - expense };
 };
 
 export const getDailySummary = (date) =>
