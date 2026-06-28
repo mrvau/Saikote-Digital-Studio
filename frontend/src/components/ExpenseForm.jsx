@@ -6,6 +6,7 @@ import { useReducer, useEffect, useState } from "react";
 import { useParams, useNavigate, Link } from "react-router-dom";
 import { getExpense, createExpense, updateExpense } from "../api/client";
 import { useToast } from "../hooks/useToast";
+import { expenseInputs } from "../constants";
 
 const updateState = (state, action) => {
 	switch (action.type) {
@@ -26,7 +27,6 @@ const initialState = {
 	amount: "",
 };
 
-const CATEGORY_OPTIONS = ["Salary", "Shop Expense"];
 const CATEGORY_MAP = { Salary: "salary", "Shop Expense": "shop_expense" };
 const CATEGORY_REVERSE = { salary: "Salary", shop_expense: "Shop Expense" };
 
@@ -98,48 +98,37 @@ const ExpenseForm = () => {
 			<form
 				onSubmit={handleSubmit}
 				className="bg-[#222222] px-5 py-4 rounded-md text-[#cccccc] text-center w-5xl">
-				{/* Category selector */}
-				<div className="mb-5">
-					<label htmlFor="category" className="block mb-2">
-						Category
-					</label>
-					<Select
-						id="category"
-						options={CATEGORY_OPTIONS}
-						dispatch={dispatch}
-						value={state.category}
-					/>
-					{errors.category && (
-						<p className="text-[#e08b8b] text-sm mt-1 text-left">{errors.category}</p>
-					)}
-				</div>
+				{expenseInputs.map((input, index) => {
+					// Hide Expense Type if category is Salary
+					if (isSalary && input.id === "expenseType") return null;
 
-				{/* Expense type — only shown for Shop Expense */}
-				{!isSalary && (
-					<div className="mb-5">
-						<label htmlFor="expenseType" className="block mb-2">
-							Expense type
-						</label>
-						<Input
-							id="expenseType"
-							type="text"
-							placeholder="Chemicals, rent, electricity…"
-							dispatch={dispatch}
-							value={state.expenseType}
-						/>
-						{errors.expenseType && (
-							<p className="text-[#e08b8b] text-sm mt-1 text-left">{errors.expenseType}</p>
-						)}
-					</div>
-				)}
-
-				<div className="mb-5">
-					<label htmlFor="amount" className="block mb-2">
-						Amount
-					</label>
-					<Input id="amount" type="number" placeholder="0" dispatch={dispatch} value={state.amount} />
-					{errors.amount && <p className="text-[#e08b8b] text-sm mt-1 text-left">{errors.amount}</p>}
-				</div>
+					return (
+						<div className="mb-5" key={index}>
+							<label htmlFor={input.id} className="block mb-2">
+								{input.label}
+							</label>
+							{input.type === "select" ? (
+								<Select
+									options={input.options}
+									id={input.id}
+									dispatch={dispatch}
+									value={state[input.id]}
+								/>
+							) : (
+								<Input
+									id={input.id}
+									type={input.type}
+									placeholder={input.placeholder}
+									dispatch={dispatch}
+									value={state[input.id]}
+								/>
+							)}
+							{errors[input.id] && (
+								<p className="text-[#e08b8b] text-sm mt-1 text-left">{errors[input.id]}</p>
+							)}
+						</div>
+					);
+				})}
 
 				<div className="flex gap-3 justify-center">
 					<Button>{isEditing ? "Update expense" : "Save expense"}</Button>

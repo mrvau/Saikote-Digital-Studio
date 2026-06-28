@@ -13,7 +13,9 @@ export const listOrders = (req, res) => {
 };
 
 export const getOrder = (req, res) => {
-	const order = getOrderById(Number(req.params.id));
+	const id = Number(req.params.id);
+	if (isNaN(id)) return res.status(400).json({ success: false, message: "Invalid ID." });
+	const order = getOrderById(id);
 	if (!order) return res.status(404).json({ success: false, message: "Order not found." });
 	res.json({ success: true, data: order });
 };
@@ -34,6 +36,7 @@ export const addOrder = (req, res) => {
 
 export const editOrder = (req, res) => {
 	const id = Number(req.params.id);
+	if (isNaN(id)) return res.status(400).json({ success: false, message: "Invalid ID." });
 	if (!getOrderById(id)) {
 		return res.status(404).json({ success: false, message: "Order not found." });
 	}
@@ -47,6 +50,7 @@ export const editOrder = (req, res) => {
 
 export const removeOrder = (req, res) => {
 	const id = Number(req.params.id);
+	if (isNaN(id)) return res.status(400).json({ success: false, message: "Invalid ID." });
 	if (!getOrderById(id)) {
 		return res.status(404).json({ success: false, message: "Order not found." });
 	}

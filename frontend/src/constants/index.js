@@ -70,14 +70,20 @@ export const labInputs = [
 
 export const expenseInputs = [
 	{
+		id: "category",
+		label: "Category",
+		options: ["Salary", "Shop Expense"],
+		type: "select"
+	},
+	{
 		id: "expenseType",
 		label: "Expense Type",
 		placeholder: "Breakfast",
 		type: "text",
 	},
 	{
-		id: "expenseAmount",
-		label: "Expense Amount",
+		id: "amount",
+		label: "Amount",
 		placeholder: 30,
 		type: "number",
 	},
