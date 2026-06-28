@@ -137,7 +137,7 @@ const DocumentsList = () => {
 					{/* Date filter */}
 					<input
 						type={filterKind === "salary" ? "month" : "date"}
-						value={filterKind === "salary" ? filterDate.slice(0, 7) : (filterDate.length === 7 ? `${filterDate}-01` : filterDate)}
+						value={filterKind === "salary" ? filterDate.slice(0, 7) : filterDate}
 						onChange={(e) => {
 							const val = e.target.value;
 							if (filterKind === "salary") {

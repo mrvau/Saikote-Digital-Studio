@@ -1,2 +1,6 @@
 node_modules
 package-lock.json
+studio.db
+.env
+.env.*
+studio.db-*

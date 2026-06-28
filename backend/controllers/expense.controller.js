@@ -13,7 +13,9 @@ export const listExpenses = (req, res) => {
 };
 
 export const getExpense = (req, res) => {
-	const expense = getExpenseById(Number(req.params.id));
+	const id = Number(req.params.id);
+	if (isNaN(id)) return res.status(400).json({ success: false, message: "Invalid ID." });
+	const expense = getExpenseById(id);
 	if (!expense) return res.status(404).json({ success: false, message: "Expense not found." });
 	res.json({ success: true, data: expense });
 };
@@ -34,6 +36,7 @@ export const addExpense = (req, res) => {
 
 export const editExpense = (req, res) => {
 	const id = Number(req.params.id);
+	if (isNaN(id)) return res.status(400).json({ success: false, message: "Invalid ID." });
 	if (!getExpenseById(id)) {
 		return res.status(404).json({ success: false, message: "Expense not found." });
 	}
@@ -47,6 +50,7 @@ export const editExpense = (req, res) => {
 
 export const removeExpense = (req, res) => {
 	const id = Number(req.params.id);
+	if (isNaN(id)) return res.status(400).json({ success: false, message: "Invalid ID." });
 	if (!getExpenseById(id)) {
 		return res.status(404).json({ success: false, message: "Expense not found." });
 	}
