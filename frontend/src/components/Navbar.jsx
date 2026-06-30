@@ -1,18 +1,12 @@
-import { useEffect, useState } from "react";
 import { NavLink } from "react-router-dom";
-import { getDailySummary } from "../api/client";
+import { SummaryContext } from "../contexts/summaryContext";
+import { useContext } from "react";
 
 const navLinkClass = ({ isActive }) =>
 	`hover:text-white transition-colors ${isActive ? "text-white" : "text-[#888888]"}`;
 
 const Navbar = () => {
-	const [summary, setSummary] = useState(null);
-
-	useEffect(() => {
-		getDailySummary()
-			.then((res) => setSummary(res.data))
-			.catch((error) => console.error("Failed to load today's summary:", error));
-	});
+	const { summary } = useContext(SummaryContext);
 
 	return (
 		<div className="w-5xl mb-8 flex justify-between items-end">

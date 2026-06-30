@@ -4,6 +4,8 @@ import Form from "./components/Form";
 import ExpenseForm from "./components/ExpenseForm";
 import DocumentsList from "./components/DocumentsList";
 import Reports from "./components/Reports";
+import { SummaryProvider } from "./contexts/summaryContext";
+import { FormProvider } from "./contexts/formContext";
 
 function App() {
 	return (
@@ -11,8 +13,10 @@ function App() {
 			<header className="py-10">
 				<h1 className="font-italiana text-7xl text-white">SAIKOTE DIGITAL STUDIO</h1>
 			</header>
-			<Navbar />
-			<main className="flex flex-col items-center w-full">
+			<SummaryProvider>
+				<FormProvider>
+					<Navbar />
+					<main className="flex flex-col items-center w-full">
 				<Routes>
 					<Route path="/" element={<Form />} />
 					<Route path="/orders/:id/edit" element={<Form />} />
@@ -21,7 +25,9 @@ function App() {
 					<Route path="/documents" element={<DocumentsList />} />
 					<Route path="/reports" element={<Reports />} />
 				</Routes>
-			</main>
+					</main>
+				</FormProvider>
+			</SummaryProvider>
 		</div>
 	);
 }

@@ -1,11 +1,13 @@
-import { useEffect, useState, useCallback, useMemo } from "react";
+import { useEffect, useState, useCallback, useMemo, useContext } from "react";
 import { Link } from "react-router-dom";
 import { getOrders, getExpenses, deleteOrder, deleteExpense, getMonthlySummary } from "../api/client";
 import { useToast } from "../hooks/useToast";
 import Toast from "./Toast";
 import ConfirmDialog from "./ConfirmDialog";
+import { SummaryContext } from "../contexts/summaryContext";
+import DocumentRow from "./DocumentRow";
 
-const formatDate = (value) => (value ? value.slice(0, 16) : "");
+
 const toDate = (value) => new Date(value.replace(" ", "T"));
 const todayString = () => new Date().toLocaleDateString("sv-SE");
 
@@ -25,7 +27,7 @@ const DocumentsList = () => {
 	const [filterKind, setFilterKind] = useState("all"); // "all" | "order" | "expense"
 	const [monthlySalary, setMonthlySalary] = useState(0);
 	const { toast, showToast } = useToast();
-
+	const {fetchSummary} = useContext(SummaryContext)
 	const load = useCallback(async (date, kind) => {
 		setLoading(true);
 		setError(null);
@@ -96,6 +98,7 @@ const DocumentsList = () => {
 			} else {
 				await deleteExpense(doc.id);
 			}
+			await fetchSummary();
 			setDocuments((prev) => prev.filter((d) => !(d.kind === doc.kind && d.id === doc.id)));
 		} catch (err) {
 			showToast(err.message || "Couldn't delete that entry.", "error");
@@ -186,51 +189,11 @@ const DocumentsList = () => {
 					<p className="px-5 py-8 text-center text-[#888888]">{emptyMessage}</p>
 				) : (
 					visibleDocuments.map((doc) => (
-						<div
+						<DocumentRow
 							key={`${doc.kind}-${doc.id}`}
-							className="grid grid-cols-[110px_90px_1fr_110px_140px] gap-2 px-5 py-3 items-center border-b border-[#2a2a2a] last:border-none">
-							<span className="text-sm text-[#888888]">
-								{formatDate(doc.createdAt)}
-							</span>
-							<span
-								className={`text-xs font-bold px-2 py-1 rounded-sm w-fit ${
-									doc.kind === "order"
-										? "bg-[#1d3a2f] text-[#7ed9a8]"
-										: doc.kind === "salary"
-											? "bg-[#3a351d] text-[#e0c97d]"
-											: "bg-[#3a1d1d] text-[#e08b8b]"
-								}`}>
-								{doc.kind === "order" ? "Order" : doc.kind === "salary" ? "Salary" : "Expense"}
-							</span>
-							<span>{doc.summary}</span>
-							<span
-								className={
-									doc.kind === "order"
-										? "text-[#7ed9a8]"
-										: doc.kind === "salary"
-											? "text-[#e0c97d]"
-											: "text-[#e08b8b]"
-								}>
-								{doc.kind === "order" ? "+" : "-"}
-								{doc.amount}
-							</span>
-							<span className="flex gap-3 justify-end">
-								<Link
-									to={
-										doc.kind === "order"
-											? `/orders/${doc.id}/edit`
-											: `/expenses/${doc.id}/edit`
-									}
-									className="text-[#888888] hover:text-white">
-									Edit
-								</Link>
-								<button
-									onClick={() => setConfirmTarget(doc)}
-									className="text-[#888888] hover:text-[#e08b8b] cursor-pointer">
-									Delete
-								</button>
-							</span>
-						</div>
+							doc={doc}
+							onConfirmDelete={setConfirmTarget}
+						/>
 					))
 				)}
 
