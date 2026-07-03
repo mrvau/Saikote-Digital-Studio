@@ -6,6 +6,7 @@ const __dirname = path.dirname(fileURLToPath(import.meta.url));
 const isDev = !app.isPackaged;
 
 let mainWindow;
+let backupInterval;
 
 const createWindow = () => {
 	mainWindow = new BrowserWindow({
@@ -44,7 +45,7 @@ app.whenReady().then(async () => {
 	const runBackup = () =>
 		backupDatabase().catch((error) => console.error("Backup failed:", error));
 	runBackup(); // once on launch — covers whatever changed since the last time the app was open
-	setInterval(runBackup, 6 * 60 * 60 * 1000); // and every 6 hours, for long-running sessions
+	backupInterval = setInterval(runBackup, 6 * 60 * 60 * 1000); // and every 6 hours, for long-running sessions
 
 	createWindow();
 
@@ -55,4 +56,8 @@ app.whenReady().then(async () => {
 
 app.on("window-all-closed", () => {
 	if (process.platform !== "darwin") app.quit();
+});
+
+app.on("before-quit", () => {
+	if (backupInterval) clearInterval(backupInterval);
 });

@@ -1,10 +1,17 @@
 import { useEffect, useState } from "react";
-import { getDailySummary, getMonthlySummary, getYearlySummary, getOrders, getExpenses } from "../api/client";
+import {
+	getDailySummary,
+	getMonthlySummary,
+	getYearlySummary,
+	getOrders,
+	getExpenses,
+	isAbortError,
+} from "../api/client";
+import { currentMonthString, currentYearString, getMonthBounds, todayString } from "../../../shared/date.js";
 import { downloadCsv } from "../utils/csv";
 import { useToast } from "../hooks/useToast";
 import Toast from "./Toast";
-
-const today = () => new Date().toLocaleDateString("sv-SE");
+import TabButton from "./TabButton";
 
 const RANGE_TABS = [
 	{ key: "day", label: "Day" },
@@ -14,33 +21,40 @@ const RANGE_TABS = [
 
 const Reports = () => {
 	const [range, setRange] = useState("day");
-	const [date, setDate] = useState(today());
-	const [month, setMonth] = useState(today().slice(0, 7));
-	const [year, setYear] = useState(today().slice(0, 4));
+	const [date, setDate] = useState(todayString());
+	const [month, setMonth] = useState(currentMonthString());
+	const [year, setYear] = useState(currentYearString());
 	const [summary, setSummary] = useState(null);
 	const [loading, setLoading] = useState(true);
 	const [exporting, setExporting] = useState(false);
 	const { toast, showToast } = useToast();
 
 	useEffect(() => {
+		const controller = new AbortController();
 		setLoading(true);
 		const fetchers = {
-			day: () => getDailySummary(date),
-			month: () => getMonthlySummary(month),
-			year: () => getYearlySummary(year),
+			day: () => getDailySummary(date, { signal: controller.signal }),
+			month: () => getMonthlySummary(month, { signal: controller.signal }),
+			year: () => getYearlySummary(year, { signal: controller.signal }),
 		};
 		fetchers[range]()
 			.then((res) => setSummary(res.data))
-			.catch((error) => console.error("Failed to load summary:", error))
-			.finally(() => setLoading(false));
+			.catch((error) => {
+				if (!isAbortError(error)) {
+					console.error("Failed to load summary:", error);
+				}
+			})
+			.finally(() => {
+				if (!controller.signal.aborted) setLoading(false);
+			});
+
+		return () => controller.abort();
 	}, [range, date, month, year]);
 
 	const getRangeBounds = () => {
 		if (range === "day") return { from: date, to: date, label: date };
 		if (range === "month") {
-			const [y, m] = month.split("-").map(Number);
-			const lastDay = new Date(y, m, 0).getDate();
-			return { from: `${month}-01`, to: `${month}-${String(lastDay).padStart(2, "0")}`, label: month };
+			return { ...getMonthBounds(month), label: month };
 		}
 		return { from: `${year}-01-01`, to: `${year}-12-31`, label: year };
 	};
@@ -87,14 +101,13 @@ const Reports = () => {
 				<div className="flex justify-between items-center mb-6">
 					<div className="flex gap-2">
 						{RANGE_TABS.map((tab) => (
-							<button
+							<TabButton
 								key={tab.key}
+								active={range === tab.key}
 								onClick={() => setRange(tab.key)}
-								className={`px-4 py-1 rounded-sm font-bold cursor-pointer ${
-									range === tab.key ? "bg-[#382798] text-white" : "bg-[#333333] text-[#888888]"
-								}`}>
+							>
 								{tab.label}
-							</button>
+							</TabButton>
 						))}
 					</div>
 					<button

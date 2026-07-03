@@ -36,7 +36,19 @@ export const validateOrder = (data) => {
 		}
 	}
 
-	return { errors, data: { ...data, quantity, amount, labQuantity } };
+	return {
+		errors,
+		data: {
+			...data,
+			photoNo: data.snapType === "Snapshot" ? data.photoNo : null,
+			quantity,
+			amount,
+			printType: data.printMethod === "Lab" ? data.printType : null,
+			deliveryType: data.printMethod === "Lab" ? data.deliveryType : null,
+			labPhotoSize: data.printMethod === "Lab" ? data.labPhotoSize : null,
+			labQuantity,
+		},
+	};
 };
 
 export const validateExpense = (data) => {

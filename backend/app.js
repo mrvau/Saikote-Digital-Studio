@@ -1,13 +1,10 @@
 import express from "express";
-import dotenv from "dotenv";
 import cors from "cors";
 import { pathToFileURL } from "url";
 
 import orderRoutes from "./routes/order.routes.js";
 import expenseRoutes from "./routes/expense.routes.js";
 import summaryRoutes from "./routes/summary.routes.js";
-
-dotenv.config();
 
 // Only the Vite dev server needs an explicit origin here. Requests with no Origin header
 // (Electron's loadFile() pages, curl, etc.) are allowed through — this server only ever
@@ -34,6 +31,17 @@ export const createApp = () => {
 	app.use("/orders", orderRoutes);
 	app.use("/expenses", expenseRoutes);
 	app.use("/summary", summaryRoutes);
+
+	app.use((error, _req, res, next) => {
+		if (res.headersSent) return next(error);
+
+		if (error.type === "entity.parse.failed") {
+			return res.status(400).json({ success: false, message: "Invalid JSON payload." });
+		}
+
+		console.error("Unhandled request error:", error);
+		res.status(500).json({ success: false, message: "Internal server error." });
+	});
 
 	return app;
 };

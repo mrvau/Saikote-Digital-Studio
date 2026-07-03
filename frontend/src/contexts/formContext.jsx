@@ -21,31 +21,21 @@ const expenseInitialState = {
 	amount: "",
 };
 
-const orderReducer = (state, action) => {
+const createFormReducer = (initialState) => (state, action) => {
 	switch (action.type) {
 		case "UPDATE_FIELD":
 			return { ...state, [action.field]: action.value };
 		case "LOAD":
 			return { ...state, ...action.payload };
 		case "RESET":
-			return orderInitialState;
+			return initialState;
 		default:
 			return state;
 	}
 };
 
-const expenseReducer = (state, action) => {
-	switch (action.type) {
-		case "UPDATE_FIELD":
-			return { ...state, [action.field]: action.value };
-		case "LOAD":
-			return { ...state, ...action.payload };
-		case "RESET":
-			return expenseInitialState;
-		default:
-			return state;
-	}
-};
+const orderReducer = createFormReducer(orderInitialState);
+const expenseReducer = createFormReducer(expenseInitialState);
 
 const FormProvider = ({ children }) => {
 	const [orderState, orderDispatch] = useReducer(orderReducer, orderInitialState);
@@ -58,5 +48,4 @@ const FormProvider = ({ children }) => {
 	);
 };
 
-
-export {FormProvider, FormContext}
+export { FormProvider, FormContext };

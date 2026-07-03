@@ -1,35 +1,17 @@
 import db from "../database/db.js";
-
-const toCamel = (row) => {
-	if (!row) return row;
-	return {
-		id: row.id,
-		snapType: row.snap_type,
-		photoNo: row.photo_no,
-		photoSize: row.photo_size,
-		quantity: row.quantity,
-		amount: row.amount,
-		printMethod: row.print_method,
-		printType: row.print_type,
-		deliveryType: row.delivery_type,
-		labPhotoSize: row.lab_photo_size,
-		labQuantity: row.lab_quantity,
-		createdAt: row.created_at,
-		updatedAt: row.updated_at,
-	};
-};
+import { rowToCamel } from "../lib/mapper.js";
 
 const toRow = (data) => ({
 	snapType: data.snapType,
-	photoNo: data.snapType === "Snapshot" ? data.photoNo : null,
+	photoNo: data.photoNo,
 	photoSize: data.photoSize,
 	quantity: data.quantity,
 	amount: data.amount,
 	printMethod: data.printMethod,
-	printType: data.printMethod === "Lab" ? data.printType : null,
-	deliveryType: data.printMethod === "Lab" ? data.deliveryType : null,
-	labPhotoSize: data.printMethod === "Lab" ? data.labPhotoSize : null,
-	labQuantity: data.printMethod === "Lab" ? data.labQuantity : null,
+	printType: data.printType,
+	deliveryType: data.deliveryType,
+	labPhotoSize: data.labPhotoSize,
+	labQuantity: data.labQuantity,
 });
 
 const insertStmt = db.prepare(`
@@ -53,7 +35,7 @@ const updateStmt = db.prepare(`
 `);
 
 export const getOrderById = (id) =>
-	toCamel(db.prepare("SELECT * FROM orders WHERE id = ?").get(id));
+	rowToCamel(db.prepare("SELECT * FROM orders WHERE id = ?").get(id));
 
 export const getAllOrders = ({ from, to } = {}) => {
 	if (from && to) {
@@ -62,9 +44,9 @@ export const getAllOrders = ({ from, to } = {}) => {
 				"SELECT * FROM orders WHERE date(created_at) BETWEEN ? AND ? ORDER BY created_at DESC",
 			)
 			.all(from, to)
-			.map(toCamel);
+			.map(rowToCamel);
 	}
-	return db.prepare("SELECT * FROM orders ORDER BY created_at DESC").all().map(toCamel);
+	return db.prepare("SELECT * FROM orders ORDER BY created_at DESC").all().map(rowToCamel);
 };
 
 export const createOrder = (data) => {

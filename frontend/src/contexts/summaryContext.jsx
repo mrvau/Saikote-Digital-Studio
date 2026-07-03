@@ -1,29 +1,31 @@
-import { createContext, useCallback, useEffect, useState } from "react";
-import { getDailySummary } from "../api/client";
+import { createContext, useCallback, useEffect, useMemo, useState } from "react";
+import { getDailySummary, isAbortError } from "../api/client";
 
-const SummaryContext = createContext()
+const SummaryContext = createContext();
 
-const SummaryProvider = ({children}) => {
-  const [summary, setSummary] = useState(null);
+const SummaryProvider = ({ children }) => {
+	const [summary, setSummary] = useState(null);
 
-  const fetchSummary = useCallback(async () => {
-    try{
-      const res = await getDailySummary()
-      setSummary(res.data)
-    } catch (error) {
-      console.error("Failed to load today's summary:", error);
-    }
-  }, [])
+	const fetchSummary = useCallback(async (options) => {
+		try {
+			const res = await getDailySummary(undefined, options);
+			setSummary(res.data);
+		} catch (error) {
+			if (!isAbortError(error)) {
+				console.error("Failed to load today's summary:", error);
+			}
+		}
+	}, []);
 
 	useEffect(() => {
-		fetchSummary()
+		const controller = new AbortController();
+		fetchSummary({ signal: controller.signal });
+		return () => controller.abort();
 	}, [fetchSummary]);
 
-  return (
-    <SummaryContext.Provider value={{summary, fetchSummary}}>
-      {children}
-    </SummaryContext.Provider>
-  )
-}
+	const value = useMemo(() => ({ summary, fetchSummary }), [summary, fetchSummary]);
 
-export { SummaryContext, SummaryProvider }
+	return <SummaryContext.Provider value={value}>{children}</SummaryContext.Provider>;
+};
+
+export { SummaryContext, SummaryProvider };

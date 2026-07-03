@@ -4,7 +4,7 @@ const Select = ({ options, id, dispatch, value }) => {
 			id={id}
 			name={id}
 			value={value}
-			className={`rounded-sm py-2 px-1 cursor-pointer bg-[#333333] w-3xl`}
+			className="rounded-sm py-2 px-1 cursor-pointer bg-[#333333] w-3xl"
 			required
 			onChange={(e) =>
 				dispatch({
@@ -14,8 +14,8 @@ const Select = ({ options, id, dispatch, value }) => {
 				})
 			}>
 			<option value="">Select One</option>
-			{options.map((option, index) => (
-				<option key={index} value={option}>
+			{options.map((option) => (
+				<option key={option} value={option}>
 					{option}
 				</option>
 			))}
