@@ -17,14 +17,14 @@ function App() {
 				<FormProvider>
 					<Navbar />
 					<main className="flex flex-col items-center w-full">
-				<Routes>
-					<Route path="/" element={<Form />} />
-					<Route path="/orders/:id/edit" element={<Form />} />
-					<Route path="/expenses" element={<ExpenseForm />} />
-					<Route path="/expenses/:id/edit" element={<ExpenseForm />} />
-					<Route path="/documents" element={<DocumentsList />} />
-					<Route path="/reports" element={<Reports />} />
-				</Routes>
+						<Routes>
+							<Route path="/" element={<Form />} />
+							<Route path="/orders/:id/edit" element={<Form />} />
+							<Route path="/expenses" element={<ExpenseForm />} />
+							<Route path="/expenses/:id/edit" element={<ExpenseForm />} />
+							<Route path="/documents" element={<DocumentsList />} />
+							<Route path="/reports" element={<Reports />} />
+						</Routes>
 					</main>
 				</FormProvider>
 			</SummaryProvider>
