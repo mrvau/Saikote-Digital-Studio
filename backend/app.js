@@ -1,5 +1,6 @@
 import express from "express";
 import cors from "cors";
+import helmet from "helmet";
 import { pathToFileURL } from "url";
 
 import orderRoutes from "./routes/order.routes.js";
@@ -13,8 +14,8 @@ const allowedOrigins = ["http://localhost:5173"];
 
 export const createApp = () => {
 	const app = express();
+	app.use(helmet());
 
-	app.use(express.json());
 	app.use(
 		cors({
 			origin: (origin, callback) => {
@@ -23,6 +24,8 @@ export const createApp = () => {
 			},
 		}),
 	);
+	app.use(express.json());
+
 
 	app.get("/", (req, res) => {
 		res.json({ success: true, message: "Welcome to Saikote Digital Studio" });
@@ -54,8 +57,14 @@ export const startServer = (port = process.env.PORT || 5000) =>
 		});
 	});
 
-// Only auto-start when this file is run directly (`node app.js` / `nodemon app.js`),
+// Only auto-start when this file is run directly (`node app.js` / `nodemon app.js` or via `fork`),
 // not when Electron's main process imports startServer() itself.
 if (process.argv[1] && import.meta.url === pathToFileURL(process.argv[1]).href) {
-	startServer();
+	startServer().then(async () => {
+		const { backupDatabase } = await import("./lib/backup.js");
+		const runBackup = () =>
+			backupDatabase().catch((error) => console.error("Backup failed:", error));
+		runBackup();
+		setInterval(runBackup, 6 * 60 * 60 * 1000);
+	});
 }
