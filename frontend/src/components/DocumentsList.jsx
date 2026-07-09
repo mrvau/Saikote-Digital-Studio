@@ -1,15 +1,28 @@
-import { useEffect, useState, useCallback, useMemo } from "react";
-import { Link } from "react-router-dom";
-import { getOrders, getExpenses, deleteOrder, deleteExpense, getMonthlySummary } from "../api/client";
+import { useEffect, useState, useCallback, useMemo, useContext } from "react";
+import {
+	getOrders,
+	getExpenses,
+	deleteOrder,
+	deleteExpense,
+	getMonthlySummary,
+	isAbortError,
+} from "../api/client";
+import { currentMonthString, getMonthBounds, todayString } from "../../../shared/date.js";
 import { useToast } from "../hooks/useToast";
 import Toast from "./Toast";
 import ConfirmDialog from "./ConfirmDialog";
-import { useSummary } from "../hooks/useSummary";
+import { SummaryContext } from "../contexts/summaryContext";
+import DocumentRow from "./DocumentRow";
+import TabButton from "./TabButton";
 
 
-const formatDate = (value) => (value ? value.slice(0, 16) : "");
 const toDate = (value) => new Date(value.replace(" ", "T"));
-const todayString = () => new Date().toLocaleDateString("sv-SE");
+
+const getDocumentParams = (date, isSalaryFilter) => {
+	if (!date) return {};
+	if (isSalaryFilter) return getMonthBounds(date.slice(0, 7));
+	return { from: date, to: date };
+};
 
 const KIND_TABS = [
 	{ key: "all", label: "All" },
@@ -24,27 +37,25 @@ const DocumentsList = () => {
 	const [error, setError] = useState(null);
 	const [confirmTarget, setConfirmTarget] = useState(null);
 	const [filterDate, setFilterDate] = useState(todayString());
-	const [filterKind, setFilterKind] = useState("all"); // "all" | "order" | "expense"
+	const [filterKind, setFilterKind] = useState("all");
 	const [monthlySalary, setMonthlySalary] = useState(0);
 	const { toast, showToast } = useToast();
-	const {refetch} = useSummary()
+	const {fetchSummary} = useContext(SummaryContext)
+	const isSalaryFilter = filterKind === "salary";
+	const documentParams = useMemo(
+		() => getDocumentParams(filterDate, isSalaryFilter),
+		[filterDate, isSalaryFilter],
+	);
+	const summaryMonth = filterDate ? filterDate.slice(0, 7) : currentMonthString();
 
-	const load = useCallback(async (date, kind) => {
+	const load = useCallback(async (params, month, options = {}) => {
 		setLoading(true);
 		setError(null);
 		try {
-			let params = date ? { from: date, to: date } : {};
-			if (kind === "salary" && date) {
-				const month = date.slice(0, 7);
-				const lastDay = new Date(month.slice(0, 4), month.slice(5, 7), 0).getDate();
-				params = { from: `${month}-01`, to: `${month}-${lastDay}` };
-			}
-			const monthStr = date ? date.slice(0, 7) : todayString().slice(0, 7);
-			
 			const [ordersRes, expensesRes, summaryRes] = await Promise.all([
-				getOrders(params),
-				getExpenses(params),
-				getMonthlySummary(monthStr),
+				getOrders(params, options),
+				getExpenses(params, options),
+				getMonthlySummary(month, options),
 			]);
 			
 			setMonthlySalary(summaryRes.data.salary || 0);
@@ -64,15 +75,18 @@ const DocumentsList = () => {
 			);
 			setDocuments(merged);
 		} catch (err) {
+			if (isAbortError(err)) return;
 			setError(err.message || "Couldn't load documents.");
 		} finally {
-			setLoading(false);
+			if (!options.signal?.aborted) setLoading(false);
 		}
 	}, []);
 
 	useEffect(() => {
-		load(filterDate, filterKind);
-	}, [load, filterDate, filterKind]);
+		const controller = new AbortController();
+		load(documentParams, summaryMonth, { signal: controller.signal });
+		return () => controller.abort();
+	}, [load, documentParams, summaryMonth]);
 
 	// Kind filtering is applied client-side — no extra API call needed
 	// since the data is already loaded and kind is a property on every row.
@@ -91,6 +105,7 @@ const DocumentsList = () => {
 	}, [documents, filterDate]);
 
 	const handleConfirmDelete = async () => {
+		if (!confirmTarget) return;
 		const doc = confirmTarget;
 		setConfirmTarget(null);
 		try {
@@ -99,7 +114,7 @@ const DocumentsList = () => {
 			} else {
 				await deleteExpense(doc.id);
 			}
-			refetch()
+			await fetchSummary();
 			setDocuments((prev) => prev.filter((d) => !(d.kind === doc.kind && d.id === doc.id)));
 		} catch (err) {
 			showToast(err.message || "Couldn't delete that entry.", "error");
@@ -122,16 +137,14 @@ const DocumentsList = () => {
 					{/* Kind tabs */}
 					<div className="flex gap-2">
 						{KIND_TABS.map((tab) => (
-							<button
+							<TabButton
 								key={tab.key}
+								active={filterKind === tab.key}
 								onClick={() => setFilterKind(tab.key)}
-								className={`px-3 py-1.5 rounded-sm text-sm font-bold cursor-pointer ${
-									filterKind === tab.key
-										? "bg-[#382798] text-white"
-										: "bg-[#333333] text-[#888888] hover:text-white"
-								}`}>
+								size="sm"
+								hover>
 								{tab.label}
-							</button>
+							</TabButton>
 						))}
 					</div>
 
@@ -190,51 +203,11 @@ const DocumentsList = () => {
 					<p className="px-5 py-8 text-center text-[#888888]">{emptyMessage}</p>
 				) : (
 					visibleDocuments.map((doc) => (
-						<div
+						<DocumentRow
 							key={`${doc.kind}-${doc.id}`}
-							className="grid grid-cols-[110px_90px_1fr_110px_140px] gap-2 px-5 py-3 items-center border-b border-[#2a2a2a] last:border-none">
-							<span className="text-sm text-[#888888]">
-								{formatDate(doc.createdAt)}
-							</span>
-							<span
-								className={`text-xs font-bold px-2 py-1 rounded-sm w-fit ${
-									doc.kind === "order"
-										? "bg-[#1d3a2f] text-[#7ed9a8]"
-										: doc.kind === "salary"
-											? "bg-[#3a351d] text-[#e0c97d]"
-											: "bg-[#3a1d1d] text-[#e08b8b]"
-								}`}>
-								{doc.kind === "order" ? "Order" : doc.kind === "salary" ? "Salary" : "Expense"}
-							</span>
-							<span>{doc.summary}</span>
-							<span
-								className={
-									doc.kind === "order"
-										? "text-[#7ed9a8]"
-										: doc.kind === "salary"
-											? "text-[#e0c97d]"
-											: "text-[#e08b8b]"
-								}>
-								{doc.kind === "order" ? "+" : "-"}
-								{doc.amount}
-							</span>
-							<span className="flex gap-3 justify-end">
-								<Link
-									to={
-										doc.kind === "order"
-											? `/orders/${doc.id}/edit`
-											: `/expenses/${doc.id}/edit`
-									}
-									className="text-[#888888] hover:text-white">
-									Edit
-								</Link>
-								<button
-									onClick={() => setConfirmTarget(doc)}
-									className="text-[#888888] hover:text-[#e08b8b] cursor-pointer">
-									Delete
-								</button>
-							</span>
-						</div>
+							doc={doc}
+							onConfirmDelete={setConfirmTarget}
+						/>
 					))
 				)}
 

@@ -1,24 +1,45 @@
 import db from "../database/db.js";
 
-const sumWhere = (table, whereClause, params) =>
-	db.prepare(`SELECT COALESCE(SUM(amount), 0) as total FROM ${table} WHERE ${whereClause}`).get(
-		...params,
-	).total;
+const TABLES = {
+	orders: "orders",
+	expenses: "expenses",
+};
 
-const buildSummary = (label, value, whereClause, params) => {
-	const income = sumWhere("orders", whereClause, params);
-	const expense = sumWhere("expenses", whereClause, params);
-	const salary = sumWhere("expenses", `(${whereClause}) AND category = 'salary'`, params);
+const PERIOD_WHERE = {
+	day: "date(created_at) = ?",
+	month: "strftime('%Y-%m', created_at) = ?",
+	year: "strftime('%Y', created_at) = ?",
+};
+
+const sumWhere = (tableKey, periodKey, params, extraWhere = "", extraParams = []) => {
+	const table = TABLES[tableKey];
+	const whereClause = PERIOD_WHERE[periodKey];
+
+	if (!table || !whereClause) {
+		throw new Error("Unsupported summary query.");
+	}
+
+	return db
+		.prepare(
+			`SELECT COALESCE(SUM(amount), 0) as total FROM ${table} WHERE ${whereClause}${extraWhere}`,
+		)
+		.get(...params, ...extraParams).total;
+};
+
+const buildSummary = (label, value, periodKey, params) => {
+	const income = sumWhere("orders", periodKey, params);
+	const expense = sumWhere("expenses", periodKey, params);
+	const salary = sumWhere("expenses", periodKey, params, " AND category = ?", ["salary"]);
 	return { [label]: value, income, expense, salary, net: income - expense };
 };
 
 export const getDailySummary = (date) =>
-	buildSummary("date", date, "date(created_at) = ?", [date]);
+	buildSummary("date", date, "day", [date]);
 
 export const getMonthlySummary = (month) =>
 	// month format: 'YYYY-MM'
-	buildSummary("month", month, "strftime('%Y-%m', created_at) = ?", [month]);
+	buildSummary("month", month, "month", [month]);
 
 export const getYearlySummary = (year) =>
 	// year format: 'YYYY'
-	buildSummary("year", year, "strftime('%Y', created_at) = ?", [year]);
+	buildSummary("year", year, "year", [year]);

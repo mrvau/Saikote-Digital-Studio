@@ -6,11 +6,13 @@ const ConfirmDialog = ({ open, message, confirmLabel = "Delete", onConfirm, onCa
 				<p className="mb-6">{message}</p>
 				<div className="flex gap-3 justify-center">
 					<button
+						type="button"
 						onClick={onCancel}
 						className="font-bold bg-[#333333] w-32 py-2 rounded-sm cursor-pointer">
 						Cancel
 					</button>
 					<button
+						type="button"
 						onClick={onConfirm}
 						className="font-bold bg-[#382798] w-32 py-2 rounded-sm cursor-pointer">
 						{confirmLabel}

@@ -1,12 +1,12 @@
 import { NavLink } from "react-router-dom";
-import { useSummary } from "../hooks/useSummary";
-
+import { SummaryContext } from "../contexts/summaryContext";
+import { useContext } from "react";
 
 const navLinkClass = ({ isActive }) =>
 	`hover:text-white transition-colors ${isActive ? "text-white" : "text-[#888888]"}`;
 
 const Navbar = () => {
-	const {summary} = useSummary()
+	const { summary } = useContext(SummaryContext);
 
 	return (
 		<div className="w-5xl mb-8 flex justify-between items-end">

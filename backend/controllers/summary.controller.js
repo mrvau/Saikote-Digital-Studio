@@ -1,19 +1,34 @@
 import { getDailySummary, getMonthlySummary, getYearlySummary } from "../models/summary.model.js";
+import { currentMonthString, currentYearString, todayString } from "../../shared/date.js";
 
-// sv-SE locale formats as YYYY-MM-DD, matching SQLite's date(created_at) output
-const todayParts = () => new Date().toLocaleDateString("sv-SE");
+const sendSummaryError = (res, label, error) => {
+	console.error(`Failed to load ${label} summary:`, error);
+	res.status(500).json({ success: false, message: `Failed to load ${label} summary.` });
+};
 
 export const dailySummary = (req, res) => {
-	const date = req.query.date || todayParts();
-	res.json({ success: true, data: getDailySummary(date) });
+	try {
+		const date = req.query.date || todayString();
+		res.json({ success: true, data: getDailySummary(date) });
+	} catch (error) {
+		sendSummaryError(res, "daily", error);
+	}
 };
 
 export const monthlySummary = (req, res) => {
-	const month = req.query.month || todayParts().slice(0, 7);
-	res.json({ success: true, data: getMonthlySummary(month) });
+	try {
+		const month = req.query.month || currentMonthString();
+		res.json({ success: true, data: getMonthlySummary(month) });
+	} catch (error) {
+		sendSummaryError(res, "monthly", error);
+	}
 };
 
 export const yearlySummary = (req, res) => {
-	const year = req.query.year || todayParts().slice(0, 4);
-	res.json({ success: true, data: getYearlySummary(year) });
+	try {
+		const year = req.query.year || currentYearString();
+		res.json({ success: true, data: getYearlySummary(year) });
+	} catch (error) {
+		sendSummaryError(res, "yearly", error);
+	}
 };

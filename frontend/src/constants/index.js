@@ -25,7 +25,7 @@ export const normalInputs = [
 		id: "quantity",
 		label: "Quantity",
 		placeholder: 4,
-		type: "number",
+		type: "number", 
 	},
 	{
 		id: "amount",
@@ -88,3 +88,9 @@ export const expenseInputs = [
 		type: "number",
 	},
 ];
+
+export const KIND_THEMES = {
+	order: { badge: "bg-[#1d3a2f] text-[#7ed9a8]", text: "text-[#7ed9a8]", sign: "+", label: "Order" },
+	expense: { badge: "bg-[#3a1d1d] text-[#e08b8b]", text: "text-[#e08b8b]", sign: "-", label: "Expense" },
+	salary: { badge: "bg-[#3a351d] text-[#e0c97d]", text: "text-[#e0c97d]", sign: "-", label: "Salary" },
+};

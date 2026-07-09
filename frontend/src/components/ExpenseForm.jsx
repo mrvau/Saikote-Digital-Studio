@@ -1,96 +1,52 @@
-import Input from "./Input";
-import Select from "./Select";
-import Button from "./Button";
-import Toast from "./Toast";
-import { useReducer, useEffect, useState } from "react";
-import { useParams, useNavigate, Link } from "react-router-dom";
-import { getExpense, createExpense, updateExpense } from "../api/client";
-import { useToast } from "../hooks/useToast";
+import { useContext, useEffect, useState } from "react";
+import { useParams } from "react-router-dom";
+import { getExpense, createExpense, updateExpense, isAbortError } from "../api/client";
 import { expenseInputs } from "../constants";
-import { useSummary } from "../hooks/useSummary";
-
-
-const updateState = (state, action) => {
-	switch (action.type) {
-		case "UPDATE_FIELD":
-			return { ...state, [action.field]: action.value };
-		case "LOAD":
-			return { ...state, ...action.payload };
-		case "RESET":
-			return action.initialState;
-		default:
-			return state;
-	}
-};
-
-const initialState = {
-	category: "",
-	expenseType: "",
-	amount: "",
-};
-
-const CATEGORY_MAP = { Salary: "salary", "Shop Expense": "shop_expense" };
-const CATEGORY_REVERSE = { salary: "Salary", shop_expense: "Shop Expense" };
+import { FormContext } from "../contexts/formContext";
+import { useFormSubmit } from "../hooks/useFormSubmit";
+import { isSalaryCategory, toExpenseFormState, toExpensePayload } from "../utils/expense";
+import FormLayout from "./FormLayout";
+import FormField from "./FormField";
 
 const ExpenseForm = () => {
 	const { id } = useParams();
-	const navigate = useNavigate();
 	const isEditing = Boolean(id);
-	const [state, dispatch] = useReducer(updateState, initialState);
-	const [errors, setErrors] = useState({});
+	const { expenseState: state, expenseDispatch: dispatch } = useContext(FormContext);
 	const [loading, setLoading] = useState(isEditing);
-	const { toast, showToast } = useToast();
-	const {refetch} = useSummary()
+	const { handleFormSubmit, errors, toast } = useFormSubmit();
 
 	useEffect(() => {
 		if (!isEditing) return;
-		getExpense(id)
+		const controller = new AbortController();
+		getExpense(id, { signal: controller.signal })
 			.then((res) => {
-				const data = res.data;
 				dispatch({
 					type: "LOAD",
-					payload: {
-						...data,
-						// Map DB value back to display label for the Select component
-						category: CATEGORY_REVERSE[data.category] || "",
-					},
+					payload: toExpenseFormState(res.data),
 				});
 			})
 			.catch((error) => {
-				console.error("Couldn't load expense:", error);
-				navigate("/documents");
+				if (!isAbortError(error)) {
+					console.error("Couldn't load expense:", error);
+				}
 			})
-			.finally(() => setLoading(false));
-	}, [id, isEditing, navigate]);
+			.finally(() => {
+				if (!controller.signal.aborted) setLoading(false);
+			});
 
-	const isSalary = CATEGORY_MAP[state.category] === "salary";
+		return () => controller.abort();
+	}, [id, isEditing, dispatch]);
 
-	const handleSubmit = async (e) => {
-		e.preventDefault();
-		setErrors({});
-		// Map the display label to the DB value before sending
-		const payload = {
-			...state,
-			category: CATEGORY_MAP[state.category] || state.category,
-			expenseType: isSalary ? null : state.expenseType,
-		};
-		try {
-			if (isEditing) {
-				await updateExpense(id, payload);
-				navigate("/documents");
-			} else {
-				await createExpense(payload);
-				showToast("Expense saved.");
-				dispatch({ type: "RESET", initialState });
-			}
-			refetch()
-		} catch (error) {
-			if (error.errors) {
-				setErrors(error.errors);
-			} else {
-				showToast(error.message || "Something went wrong saving the expense.", "error");
-			}
-		}
+	const isSalary = isSalaryCategory(state.category);
+
+	const onSubmit = (e) => {
+		handleFormSubmit(e, {
+			isEditing,
+			payload: toExpensePayload(state),
+			submitAction: isEditing ? (data) => updateExpense(id, data) : createExpense,
+			successMessage: "Expense saved.",
+			dispatch,
+		});
 	};
 
 	if (loading) {
@@ -98,55 +54,17 @@ const ExpenseForm = () => {
 	}
 
 	return (
-		<>
-			<form
-				onSubmit={handleSubmit}
-				className="bg-[#222222] px-5 py-4 rounded-md text-[#cccccc] text-center w-5xl">
-				{expenseInputs.map((input, index) => {
-					// Hide Expense Type if category is Salary
-					if (isSalary && input.id === "expenseType") return null;
-
-					return (
-						<div className="mb-5" key={index}>
-							<label htmlFor={input.id} className="block mb-2">
-								{input.label}
-							</label>
-							{input.type === "select" ? (
-								<Select
-									options={input.options}
-									id={input.id}
-									dispatch={dispatch}
-									value={state[input.id]}
-								/>
-							) : (
-								<Input
-									id={input.id}
-									type={input.type}
-									placeholder={input.placeholder}
-									dispatch={dispatch}
-									value={state[input.id]}
-								/>
-							)}
-							{errors[input.id] && (
-								<p className="text-[#e08b8b] text-sm mt-1 text-left">{errors[input.id]}</p>
-							)}
-						</div>
-					);
-				})}
-
-				<div className="flex gap-3 justify-center">
-					<Button>{isEditing ? "Update expense" : "Save expense"}</Button>
-					{isEditing && (
-						<Link
-							to="/documents"
-							className="font-bold text-center bg-[#333333] w-3xl my-4 py-1 rounded-sm cursor-pointer flex items-center justify-center">
-							Cancel
-						</Link>
-					)}
-				</div>
-			</form>
-			<Toast toast={toast} />
-		</>
+		<FormLayout
+			onSubmit={onSubmit}
+			isEditing={isEditing}
+			submitText={isEditing ? "Update expense" : "Save expense"}
+			toast={toast}
+		>
+			{expenseInputs.map((input) => {
+				if (isSalary && input.id === "expenseType") return null;
+				return <FormField key={input.id} input={input} state={state} dispatch={dispatch} errors={errors} />;
+			})}
+		</FormLayout>
 	);
 };
 
