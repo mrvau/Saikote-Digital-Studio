@@ -1,7 +1,7 @@
 import { useContext, useEffect, useState } from "react";
 import { useParams } from "react-router-dom";
 import { normalInputs, labInputs } from "../constants";
-import { getOrder, createOrder, updateOrder } from "../api/client";
+import { getOrder, createOrder, updateOrder, isAbortError } from "../api/client";
 import { FormContext } from "../contexts/formContext";
 import { useFormSubmit } from "../hooks/useFormSubmit";
 import FormLayout from "./FormLayout";
@@ -16,12 +16,20 @@ const Form = () => {
 
 	useEffect(() => {
 		if (!isEditing) return;
-		getOrder(id)
+
+		const controller = new AbortController();
+		getOrder(id, { signal: controller.signal })
 			.then((res) => dispatch({ type: "LOAD", payload: res.data }))
 			.catch((error) => {
-				console.error("Couldn't load order:", error);
+				if (!isAbortError(error)) {
+					console.error("Couldn't load order:", error);
+				}
 			})
-			.finally(() => setLoading(false));
+			.finally(() => {
+				if (!controller.signal.aborted) setLoading(false);
+			});
+
+		return () => controller.abort();
 	}, [id, isEditing, dispatch]);
 
 	const onSubmit = (e) => {
@@ -45,13 +53,13 @@ const Form = () => {
 			submitText={isEditing ? "Update order" : "Save order"}
 			toast={toast}
 		>
-			{normalInputs.map((input, index) => (
-				<FormField key={index} input={input} state={state} dispatch={dispatch} errors={errors} />
+			{normalInputs.map((input) => (
+				<FormField key={input.id} input={input} state={state} dispatch={dispatch} errors={errors} />
 			))}
 
 			{state.printMethod === "Lab" &&
-				labInputs.map((input, index) => (
-					<FormField key={index} input={input} state={state} dispatch={dispatch} errors={errors} />
+				labInputs.map((input) => (
+					<FormField key={input.id} input={input} state={state} dispatch={dispatch} errors={errors} />
 				))}
 		</FormLayout>
 	);

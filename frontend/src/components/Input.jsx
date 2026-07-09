@@ -1,14 +1,14 @@
-const Input = ({ type, placeholder, dispatch, value, id, disabled = false, step="1" }) => {
+const Input = ({ type, placeholder, dispatch, value, id, disabled = false, step = "1" }) => {
 	return (
 		<input
 			id={id}
 			type={type}
 			name={id}
 			className={`outline-none w-3xl rounded-sm py-2 px-2 ${
-				disabled && id === "photoNo" ? "cursor-not-allowed bg-[#272727]" : "bg-[#333333] "
+				disabled ? "cursor-not-allowed bg-[#272727]" : "bg-[#333333]"
 			}`}
 			placeholder={placeholder}
-			disabled={disabled && id === "photoNo"}
+			disabled={disabled}
 			value={value}
 			onChange={(e) =>
 				dispatch({

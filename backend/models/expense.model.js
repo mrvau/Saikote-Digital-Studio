@@ -1,16 +1,5 @@
 import db from "../database/db.js";
-
-const toCamel = (row) => {
-	if (!row) return row;
-	return {
-		id: row.id,
-		category: row.category,
-		expenseType: row.expense_type,
-		amount: row.amount,
-		createdAt: row.created_at,
-		updatedAt: row.updated_at,
-	};
-};
+import { rowToCamel } from "../lib/mapper.js";
 
 const insertStmt = db.prepare(
 	"INSERT INTO expenses (category, expense_type, amount) VALUES (@category, @expenseType, @amount)",
@@ -23,7 +12,7 @@ const updateStmt = db.prepare(`
 `);
 
 export const getExpenseById = (id) =>
-	toCamel(db.prepare("SELECT * FROM expenses WHERE id = ?").get(id));
+	rowToCamel(db.prepare("SELECT * FROM expenses WHERE id = ?").get(id));
 
 export const getAllExpenses = ({ from, to, category } = {}) => {
 	const conditions = [];
@@ -42,7 +31,7 @@ export const getAllExpenses = ({ from, to, category } = {}) => {
 	return db
 		.prepare(`SELECT * FROM expenses${whereClause} ORDER BY created_at DESC`)
 		.all(...params)
-		.map(toCamel);
+		.map(rowToCamel);
 };
 
 export const createExpense = (data) => {
