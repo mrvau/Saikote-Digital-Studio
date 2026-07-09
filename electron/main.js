@@ -6,7 +6,7 @@ const __dirname = path.dirname(fileURLToPath(import.meta.url));
 const isDev = !app.isPackaged;
 
 let mainWindow;
-let backupInterval;
+let serverProcess;
 
 const createWindow = () => {
 	mainWindow = new BrowserWindow({
@@ -38,14 +38,10 @@ app.whenReady().then(async () => {
 	// why a dynamic import() is used here instead.
 	process.env.DB_PATH = path.join(app.getPath("userData"), "studio.db");
 
-	const { startServer } = await import("../backend/app.js");
-	const { backupDatabase } = await import("../backend/lib/backup.js");
-	await startServer();
-
-	const runBackup = () =>
-		backupDatabase().catch((error) => console.error("Backup failed:", error));
-	runBackup(); // once on launch — covers whatever changed since the last time the app was open
-	backupInterval = setInterval(runBackup, 6 * 60 * 60 * 1000); // and every 6 hours, for long-running sessions
+	const { fork } = await import("child_process");
+	serverProcess = fork(path.join(__dirname, "..", "backend", "app.js"), [], {
+		env: process.env,
+	});
 
 	createWindow();
 
@@ -59,5 +55,5 @@ app.on("window-all-closed", () => {
 });
 
 app.on("before-quit", () => {
-	if (backupInterval) clearInterval(backupInterval);
+	if (serverProcess) serverProcess.kill();
 });
