@@ -11,8 +11,11 @@ export const useFormSubmit = () => {
 	const mountedRef = useRef(true);
 
 	useEffect(
-		() => () => {
-			mountedRef.current = false;
+		() => {
+			mountedRef.current = true;
+			return () => {
+				mountedRef.current = false;
+			};
 		},
 		[],
 	);

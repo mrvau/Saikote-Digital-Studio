@@ -1,6 +1,8 @@
 const parseId = (value) => {
+	if (!/^[1-9]\d*$/.test(String(value))) return null;
 	const id = Number(value);
-	return Number.isNaN(id) ? null : id;
+
+	return Number.isSafeInteger(id) ? id : null;
 };
 
 const hasValidationErrors = (errors) => Object.keys(errors).length > 0;
