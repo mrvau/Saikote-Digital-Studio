@@ -4,6 +4,8 @@ import { getOrders, getExpenses, deleteOrder, deleteExpense, getMonthlySummary }
 import { useToast } from "../hooks/useToast";
 import Toast from "./Toast";
 import ConfirmDialog from "./ConfirmDialog";
+import { useSummary } from "../hooks/useSummary";
+
 
 const formatDate = (value) => (value ? value.slice(0, 16) : "");
 const toDate = (value) => new Date(value.replace(" ", "T"));
@@ -25,6 +27,7 @@ const DocumentsList = () => {
 	const [filterKind, setFilterKind] = useState("all"); // "all" | "order" | "expense"
 	const [monthlySalary, setMonthlySalary] = useState(0);
 	const { toast, showToast } = useToast();
+	const {refetch} = useSummary()
 
 	const load = useCallback(async (date, kind) => {
 		setLoading(true);
@@ -96,6 +99,7 @@ const DocumentsList = () => {
 			} else {
 				await deleteExpense(doc.id);
 			}
+			refetch()
 			setDocuments((prev) => prev.filter((d) => !(d.kind === doc.kind && d.id === doc.id)));
 		} catch (err) {
 			showToast(err.message || "Couldn't delete that entry.", "error");

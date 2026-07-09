@@ -7,6 +7,8 @@ import { useParams, useNavigate, Link } from "react-router-dom";
 import { getExpense, createExpense, updateExpense } from "../api/client";
 import { useToast } from "../hooks/useToast";
 import { expenseInputs } from "../constants";
+import { useSummary } from "../hooks/useSummary";
+
 
 const updateState = (state, action) => {
 	switch (action.type) {
@@ -38,6 +40,7 @@ const ExpenseForm = () => {
 	const [errors, setErrors] = useState({});
 	const [loading, setLoading] = useState(isEditing);
 	const { toast, showToast } = useToast();
+	const {refetch} = useSummary()
 
 	useEffect(() => {
 		if (!isEditing) return;
@@ -80,6 +83,7 @@ const ExpenseForm = () => {
 				showToast("Expense saved.");
 				dispatch({ type: "RESET", initialState });
 			}
+			refetch()
 		} catch (error) {
 			if (error.errors) {
 				setErrors(error.errors);
