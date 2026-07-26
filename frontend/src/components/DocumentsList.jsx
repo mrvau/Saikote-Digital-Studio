@@ -131,7 +131,7 @@ const DocumentsList = () => {
 
 	return (
 		<>
-			<div className="bg-[#222222] rounded-md text-[#cccccc] w-5xl overflow-hidden">
+			<div className="bg-[#222222] rounded-md text-[#cccccc] w-5xl overflow-visible">
 				{/* Filter bar */}
 				<div className="flex items-center gap-3 px-5 py-4 border-b border-[#333333]">
 					{/* Kind tabs */}
