@@ -21,11 +21,23 @@ const TooltipField = ({ label, value }) => {
 	);
 };
 
-const DocumentRow = ({ doc, onConfirmDelete }) => {
+const PaymentBadge = ({ orderAmount, totalPaid }) => {
+	const outstanding = orderAmount - totalPaid;
+	if (outstanding <= 0) {
+		return <span className="text-xs font-bold px-2 py-0.5 rounded-sm bg-[#1d3a2f] text-[#7ed9a8]">Paid</span>;
+	}
+	if (totalPaid > 0) {
+		return <span className="text-xs font-bold px-2 py-0.5 rounded-sm bg-[#3a351d] text-[#e0c97d]">Partially Paid</span>;
+	}
+	return <span className="text-xs font-bold px-2 py-0.5 rounded-sm bg-[#3a1d1d] text-[#e08b8b]">Unpaid</span>;
+};
+
+const DocumentRow = ({ doc, onConfirmDelete, onPay }) => {
 	const theme = KIND_THEMES[doc.kind] || KIND_THEMES.order;
+	const isOrder = doc.kind === "order";
 
 	return (
-		<div className="group relative grid grid-cols-[110px_90px_1fr_110px_140px] gap-2 px-5 py-3 items-center border-b border-[#2a2a2a] last:border-none hover:bg-[#2a2a2a]/50 transition-colors">
+		<div className="group relative grid grid-cols-[110px_90px_1fr_110px_180px] gap-2 px-5 py-3 items-center border-b border-[#2a2a2a] last:border-none hover:bg-[#2a2a2a]/50 transition-colors">
 			<span className="text-sm text-[#888888]">{formatDate(doc.createdAt)}</span>
 			<span className={`text-xs font-bold px-2 py-1 rounded-sm w-fit ${theme.badge}`}>
 				{theme.label}
@@ -33,9 +45,18 @@ const DocumentRow = ({ doc, onConfirmDelete }) => {
 			<span>{doc.summary}</span>
 			<span className={theme.text}>
 				{theme.sign}
-				{doc.amount}
+				{doc.amount} ৳
 			</span>
-			<span className="flex gap-3 justify-end">
+			<span className="flex gap-3 justify-end items-center">
+				{isOrder && onPay && (
+					<button
+						type="button"
+						onClick={() => onPay(doc.id)}
+						className="text-xs font-bold bg-[#382798] text-white px-2 py-0.5 rounded-sm cursor-pointer hover:bg-[#4a37a8]">
+						Pay
+					</button>
+				)}
+				{isOrder && <PaymentBadge orderAmount={doc.amount} totalPaid={doc.totalPaid || 0} />}
 				<Link
 					to={doc.kind === "order" ? `/orders/${doc.id}/edit` : `/expenses/${doc.id}/edit`}
 					className="text-[#888888] hover:text-white">
@@ -93,6 +114,14 @@ const DocumentRow = ({ doc, onConfirmDelete }) => {
 								{theme.sign}{doc.amount} ৳
 							</span>
 						</div>
+
+						{/* Payment Info */}
+						{isOrder && (
+							<div className="mt-1 pt-2 border-t border-[#2a2a2a]">
+								<TooltipField label="Total Paid" value={`${doc.totalPaid || 0} ৳`} />
+								<TooltipField label="Outstanding" value={`${(doc.amount - (doc.totalPaid || 0))} ৳`} />
+							</div>
+						)}
 
 						{/* Timestamps */}
 						<div className="mt-1 pt-2 border-t border-[#2a2a2a] flex flex-col gap-1">

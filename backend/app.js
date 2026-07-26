@@ -6,6 +6,7 @@ import { pathToFileURL } from "url";
 import orderRoutes from "./routes/order.routes.js";
 import expenseRoutes from "./routes/expense.routes.js";
 import summaryRoutes from "./routes/summary.routes.js";
+import paymentRoutes from "./routes/payment.routes.js";
 
 // Only the Vite dev server needs an explicit origin here. Requests with no Origin header
 // (Electron's loadFile() pages, curl, etc.) are allowed through — this server only ever
@@ -34,6 +35,7 @@ export const createApp = () => {
 	app.use("/orders", orderRoutes);
 	app.use("/expenses", expenseRoutes);
 	app.use("/summary", summaryRoutes);
+	app.use("/payments", paymentRoutes);
 
 	app.use((error, _req, res, next) => {
 		if (res.headersSent) return next(error);

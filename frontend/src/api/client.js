@@ -42,3 +42,13 @@ export const getMonthlySummary = (month, options) =>
 	request(`/summary/monthly${toQuery({ month })}`, options);
 export const getYearlySummary = (year, options) =>
 	request(`/summary/yearly${toQuery({ year })}`, options);
+export const getOutstandingBalance = (orderId, options) =>
+	request(`/payments/outstanding/${orderId}`, options);
+export const getTotalOutstandingBalance = (options) =>
+	request(`/summary/outstanding`, options);
+
+export const getPaymentsByOrder = (orderId, options) =>
+	request(`/payments/order/${orderId}`, options);
+export const createPayment = (data) =>
+	request("/payments", { method: "POST", body: JSON.stringify(data) });
+export const deletePayment = (id) => request(`/payments/${id}`, { method: "DELETE" });

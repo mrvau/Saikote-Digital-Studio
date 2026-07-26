@@ -43,3 +43,9 @@ export const getMonthlySummary = (month) =>
 export const getYearlySummary = (year) =>
 	// year format: 'YYYY'
 	buildSummary("year", year, "year", [year]);
+
+export const getTotalOutstandingBalance = () => {
+	const totalOrders = db.prepare("SELECT COALESCE(SUM(amount), 0) as total FROM orders").get().total;
+	const totalPaid = db.prepare("SELECT COALESCE(SUM(amount), 0) as total FROM payments").get().total;
+	return totalOrders - totalPaid;
+};

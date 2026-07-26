@@ -1,4 +1,4 @@
-import { getDailySummary, getMonthlySummary, getYearlySummary } from "../models/summary.model.js";
+import { getDailySummary, getMonthlySummary, getYearlySummary, getTotalOutstandingBalance } from "../models/summary.model.js";
 import { currentMonthString, currentYearString, todayString } from "../../shared/date.js";
 
 const sendSummaryError = (res, label, error) => {
@@ -30,5 +30,13 @@ export const yearlySummary = (req, res) => {
 		res.json({ success: true, data: getYearlySummary(year) });
 	} catch (error) {
 		sendSummaryError(res, "yearly", error);
+	}
+};
+
+export const outstandingBalance = (req, res) => {
+	try {
+		res.json({ success: true, data: { outstandingBalance: getTotalOutstandingBalance() } });
+	} catch (error) {
+		sendSummaryError(res, "outstanding balance", error);
 	}
 };

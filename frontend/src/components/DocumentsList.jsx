@@ -5,12 +5,14 @@ import {
 	deleteOrder,
 	deleteExpense,
 	getMonthlySummary,
+	getPaymentsByOrder,
 	isAbortError,
 } from "../api/client";
 import { currentMonthString, getMonthBounds, todayString } from "../../../shared/date.js";
 import { useToast } from "../hooks/useToast";
 import Toast from "./Toast";
 import ConfirmDialog from "./ConfirmDialog";
+import PaymentForm from "./PaymentForm";
 import { SummaryContext } from "../contexts/summaryContext";
 import DocumentRow from "./DocumentRow";
 import TabButton from "./TabButton";
@@ -36,17 +38,36 @@ const DocumentsList = () => {
 	const [loading, setLoading] = useState(true);
 	const [error, setError] = useState(null);
 	const [confirmTarget, setConfirmTarget] = useState(null);
+	const [paymentOrderId, setPaymentOrderId] = useState(null);
 	const [filterDate, setFilterDate] = useState(todayString());
 	const [filterKind, setFilterKind] = useState("all");
 	const [monthlySalary, setMonthlySalary] = useState(0);
 	const { toast, showToast } = useToast();
-	const {fetchSummary} = useContext(SummaryContext)
+	const { fetchSummary } = useContext(SummaryContext);
 	const isSalaryFilter = filterKind === "salary";
 	const documentParams = useMemo(
 		() => getDocumentParams(filterDate, isSalaryFilter),
 		[filterDate, isSalaryFilter],
 	);
 	const summaryMonth = filterDate ? filterDate.slice(0, 7) : currentMonthString();
+
+	const fetchPaymentTotals = async (orders) => {
+		const orderIds = orders.map((o) => o.id);
+		if (orderIds.length === 0) return {};
+		try {
+			const paymentResults = await Promise.all(
+				orderIds.map((id) => getPaymentsByOrder(id)),
+			);
+			const totals = {};
+			paymentResults.forEach((res, index) => {
+				const total = res.data.reduce((sum, p) => sum + p.amount, 0);
+				totals[orderIds[index]] = total;
+			});
+			return totals;
+		} catch {
+			return {};
+		}
+	};
 
 	const load = useCallback(async (params, month, options = {}) => {
 		setLoading(true);
@@ -57,7 +78,7 @@ const DocumentsList = () => {
 				getExpenses(params, options),
 				getMonthlySummary(month, options),
 			]);
-			
+
 			setMonthlySalary(summaryRes.data.salary || 0);
 
 			const orders = ordersRes.data.map((order) => ({
@@ -70,7 +91,14 @@ const DocumentsList = () => {
 				kind: expense.category === "salary" ? "salary" : "expense",
 				summary: expense.category === "salary" ? "Salary" : expense.expenseType,
 			}));
-			const merged = [...orders, ...expenses].sort(
+
+			const paymentTotals = await fetchPaymentTotals(orders);
+			const ordersWithPayments = orders.map((order) => ({
+				...order,
+				totalPaid: paymentTotals[order.id] || 0,
+			}));
+
+			const merged = [...ordersWithPayments, ...expenses].sort(
 				(a, b) => toDate(b.createdAt) - toDate(a.createdAt),
 			);
 			setDocuments(merged);
@@ -103,6 +131,10 @@ const DocumentsList = () => {
 		}
 		return { income, expense, net: income - expense };
 	}, [documents, filterDate]);
+
+	const handlePaymentRecorded = useCallback(() => {
+		load(documentParams, summaryMonth);
+	}, [load, documentParams, summaryMonth]);
 
 	const handleConfirmDelete = async () => {
 		if (!confirmTarget) return;
@@ -186,7 +218,7 @@ const DocumentsList = () => {
 				</div>
 
 				{/* Column headers */}
-				<div className="grid grid-cols-[110px_90px_1fr_110px_140px] gap-2 px-5 py-3 text-[#888888] text-sm font-bold border-b border-[#333333]">
+				<div className="grid grid-cols-[110px_90px_1fr_110px_180px] gap-2 px-5 py-3 text-[#888888] text-sm font-bold border-b border-[#333333]">
 					<span>Date</span>
 					<span>Type</span>
 					<span>Details</span>
@@ -207,6 +239,7 @@ const DocumentsList = () => {
 							key={`${doc.kind}-${doc.id}`}
 							doc={doc}
 							onConfirmDelete={setConfirmTarget}
+							onPay={setPaymentOrderId}
 						/>
 					))
 				)}
@@ -235,6 +268,16 @@ const DocumentsList = () => {
 				onConfirm={handleConfirmDelete}
 				onCancel={() => setConfirmTarget(null)}
 			/>
+			{paymentOrderId && (
+				<PaymentForm
+					orderId={paymentOrderId}
+					orderAmount={documents.find((d) => d.id === paymentOrderId)?.amount || 0}
+					onPaymentRecorded={() => {
+						setPaymentOrderId(null);
+						handlePaymentRecorded();
+					}}
+				/>
+			)}
 			<Toast toast={toast} />
 		</>
 	);
