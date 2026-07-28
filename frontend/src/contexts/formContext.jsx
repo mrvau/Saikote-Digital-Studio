@@ -13,6 +13,10 @@ const orderInitialState = {
 	deliveryType: "",
 	labPhotoSize: "",
 	labQuantity: 1,
+	paymentMethod: "Cash",  // NEW
+	paidAmount: 0,          // NEW
+	dueAmount: 0,           // NEW (read-only)
+	paymentNotes: "",       // NEW
 };
 
 const expenseInitialState = {

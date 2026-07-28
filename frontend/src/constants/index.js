@@ -94,3 +94,51 @@ export const KIND_THEMES = {
 	expense: { badge: "bg-[#3a1d1d] text-[#e08b8b]", text: "text-[#e08b8b]", sign: "-", label: "Expense" },
 	salary: { badge: "bg-[#3a351d] text-[#e0c97d]", text: "text-[#e0c97d]", sign: "-", label: "Salary" },
 };
+
+export const paymentInputs = [
+  {
+    id: "paymentMethod",
+    label: "Payment Method",
+    options: ["Cash", "Card", "Internet Banking", "Bank Transfer"],
+    type: "select",
+  },
+  {
+    id: "paidAmount",
+    label: "Paid Amount (৳)",
+    placeholder: "0",
+    type: "number",
+  },
+  {
+    id: "dueAmount",
+    label: "Due Amount (৳)",
+    placeholder: "0",
+    type: "number",
+    disabled: true,  // Read-only; computed field
+  },
+  {
+    id: "paymentNotes",
+    label: "Payment Notes (Optional)",
+    placeholder: "e.g., Waiting for cheque clearance",
+    type: "text",
+  },
+];
+
+export const normalizePaymentMethod = (method) => {
+  const map = {
+    Cash: "cash",
+    Card: "card",
+    "Internet Banking": "internet_banking",
+    "Bank Transfer": "bank_transfer",
+  };
+  return map[method] || method;
+};
+
+export const getPaymentMethodLabel = (method) => {
+  const map = {
+    cash: "Cash",
+    card: "Card",
+    internet_banking: "Internet Banking",
+    bank_transfer: "Bank Transfer",
+  };
+  return map[method] || "Unknown";
+};
