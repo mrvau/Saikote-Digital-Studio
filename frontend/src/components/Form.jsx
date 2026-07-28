@@ -52,7 +52,10 @@ const Form = () => {
 	const onSubmit = (e) => {
 		handleFormSubmit(e, {
 			isEditing,
-			payload: state,
+			payload: {
+				...state,
+				paymentMethod: normalizePaymentMethod(state.paymentMethod)
+			},
 			submitAction: isEditing ? (data) => updateOrder(id, data) : createOrder,
 			successMessage: "Order saved.",
 			dispatch,
