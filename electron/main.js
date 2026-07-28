@@ -39,7 +39,7 @@ app.whenReady().then(async () => {
 	process.env.DB_PATH = path.join(app.getPath("userData"), "studio.db");
 
 	const { fork } = await import("child_process");
-	serverProcess = fork(path.join(__dirname, "..", "backend", "app.js"), [], {
+	const serverProcess = fork(path.join(__dirname, "..", "backend", "app.js"), [], {
 		env: process.env,
 	});
 

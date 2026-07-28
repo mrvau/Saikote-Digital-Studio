@@ -1,6 +1,8 @@
 import db from "../database/db.js";
 import { rowToCamel } from "../lib/mapper.js";
 
+export const calculateDueAmount = (amount, paidAmount) => Math.max(0, amount - paidAmount);
+
 const toRow = (data) => ({
 	snapType: data.snapType,
 	photoNo: data.photoNo,
@@ -12,15 +14,22 @@ const toRow = (data) => ({
 	deliveryType: data.deliveryType,
 	labPhotoSize: data.labPhotoSize,
 	labQuantity: data.labQuantity,
+	paymentMethod: data.paymentMethod,
+	isPaid: data.isPaid,
+	paidAmount: data.paidAmount,
+	dueAmount: data.dueAmount,
+	paymentNotes: data.paymentNotes,
 });
 
 const insertStmt = db.prepare(`
 	INSERT INTO orders (
 		snap_type, photo_no, photo_size, quantity, amount,
-		print_method, print_type, delivery_type, lab_photo_size, lab_quantity
+		print_method, print_type, delivery_type, lab_photo_size, lab_quantity,
+		payment_method, is_paid, paid_amount, due_amount, payment_notes
 	) VALUES (
 		@snapType, @photoNo, @photoSize, @quantity, @amount,
-		@printMethod, @printType, @deliveryType, @labPhotoSize, @labQuantity
+		@printMethod, @printType, @deliveryType, @labPhotoSize, @labQuantity,
+		@paymentMethod, @isPaid, @paidAmount, @dueAmount, @paymentNotes
 	)
 `);
 
@@ -30,6 +39,9 @@ const updateStmt = db.prepare(`
 		quantity = @quantity, amount = @amount, print_method = @printMethod,
 		print_type = @printType, delivery_type = @deliveryType,
 		lab_photo_size = @labPhotoSize, lab_quantity = @labQuantity,
+		payment_method = @paymentMethod, is_paid = @isPaid,
+		paid_amount = @paidAmount, due_amount = @dueAmount,
+		payment_notes = @paymentNotes,
 		updated_at = datetime('now', 'localtime')
 	WHERE id = @id
 `);

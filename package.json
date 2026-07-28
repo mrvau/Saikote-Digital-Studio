@@ -6,9 +6,10 @@
 	"main": "electron/main.js",
 	"scripts": {
 		"dev:frontend": "npm run dev --prefix frontend",
+		"dev:backend": "npm run dev --prefix backend",
 		"dev:electron": "wait-on http://localhost:5173 && electron .",
 		"dev": "concurrently -k \"npm:dev:frontend\" \"npm:dev:electron\"",
-		"rebuild:electron": "electron-rebuild -f -w better-sqlite3 --module-dir backend",
+		"rebuild:electron": "electron-rebuild -f -w better-sqlite3",
 		"build:frontend": "npm run build --prefix frontend",
 		"build": "npm run build:frontend && npm run rebuild:electron && electron-builder",
 		"build:win": "npm run build:frontend && npm run rebuild:electron && electron-builder --win"
@@ -48,5 +49,12 @@
 		"electron": "^42.4.1",
 		"electron-builder": "^26.15.3",
 		"wait-on": "^9.0.10"
+	},
+	"dependencies": {
+		"better-sqlite3": "^13.0.1"
+	},
+	"allowScripts": {
+		"better-sqlite3": true,
+		"electron-winstaller": true
 	}
 }
