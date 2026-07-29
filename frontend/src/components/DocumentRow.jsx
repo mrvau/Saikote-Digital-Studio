@@ -1,5 +1,6 @@
 import { Link } from "react-router-dom";
-import { KIND_THEMES } from "../constants";
+import { KIND_THEMES, getPaymentMethodLabel } from "../constants";
+import { getPaymentStatus } from "../utils/payment";
 
 const formatDate = (value) => (value ? value.slice(0, 16) : "");
 const formatDateFull = (value) => {
@@ -23,13 +24,25 @@ const TooltipField = ({ label, value }) => {
 
 const DocumentRow = ({ doc, onConfirmDelete }) => {
 	const theme = KIND_THEMES[doc.kind] || KIND_THEMES.order;
+	const isOrder = doc.kind === "order";
+	const paymentStatus = isOrder ? getPaymentStatus(doc) : null;
 
 	return (
-		<div className="group relative grid grid-cols-[110px_90px_1fr_110px_140px] gap-2 px-5 py-3 items-center border-b border-[#2a2a2a] last:border-none hover:bg-[#2a2a2a]/50 transition-colors">
+		<div className="group relative grid grid-cols-[110px_90px_110px_1fr_110px_140px] gap-2 px-5 py-3 items-center border-b border-[#2a2a2a] last:border-none hover:bg-[#2a2a2a]/50 transition-colors">
 			<span className="text-sm text-[#888888]">{formatDate(doc.createdAt)}</span>
 			<span className={`text-xs font-bold px-2 py-1 rounded-sm w-fit ${theme.badge}`}>
 				{theme.label}
 			</span>
+
+			{/* Payment status badge — orders only */}
+			<span>
+				{paymentStatus && (
+					<span className={`text-xs font-bold px-2 py-1 rounded-sm w-fit ${paymentStatus.bgColor} ${paymentStatus.color}`}>
+						{paymentStatus.label}
+					</span>
+				)}
+			</span>
+
 			<span>{doc.summary}</span>
 			<span className={theme.text}>
 				{theme.sign}
@@ -56,12 +69,17 @@ const DocumentRow = ({ doc, onConfirmDelete }) => {
 						<span className={`text-xs font-bold px-2 py-0.5 rounded-sm ${theme.badge}`}>
 							{theme.label}
 						</span>
+						{paymentStatus && (
+							<span className={`text-xs font-bold px-2 py-0.5 rounded-sm ${paymentStatus.bgColor} ${paymentStatus.color}`}>
+								{paymentStatus.label}
+							</span>
+						)}
 						<span className="text-[#666666] text-xs ml-auto">ID: {doc.id}</span>
 					</div>
 
 					{/* Fields */}
 					<div className="flex flex-col gap-1.5 text-xs">
-						{doc.kind === "order" ? (
+						{isOrder ? (
 							<>
 								<TooltipField label="Snap Type" value={doc.snapType} />
 								<TooltipField label="Photo No." value={doc.photoNo} />
@@ -76,6 +94,14 @@ const DocumentRow = ({ doc, onConfirmDelete }) => {
 										<TooltipField label="Lab Qty" value={doc.labQuantity} />
 									</>
 								)}
+
+								{/* Payment details */}
+								<div className="mt-1 pt-2 border-t border-[#2a2a2a] flex flex-col gap-1.5">
+									<TooltipField label="Payment Method" value={getPaymentMethodLabel(doc.paymentMethod)} />
+									<TooltipField label="Paid Amount" value={`৳${doc.paidAmount}`} />
+									<TooltipField label="Due Amount" value={`৳${doc.dueAmount}`} />
+									{doc.paymentNotes && <TooltipField label="Payment Notes" value={doc.paymentNotes} />}
+								</div>
 							</>
 						) : (
 							<>
@@ -111,4 +137,3 @@ const DocumentRow = ({ doc, onConfirmDelete }) => {
 };
 
 export default DocumentRow;
-

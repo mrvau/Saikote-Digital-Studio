@@ -29,7 +29,7 @@ export const normalInputs = [
 	},
 	{
 		id: "amount",
-		label: "Amount",
+		label: "Total Amount",
 		placeholder: 50,
 		type: "number",
 	},

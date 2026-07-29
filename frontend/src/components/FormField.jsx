@@ -24,7 +24,7 @@ const FormField = ({ input, state, dispatch, errors }) => {
 					placeholder={input.placeholder}
 					disabled={isDisabled}
 					dispatch={dispatch}
-					value={state[input.id]}
+					value={isDisabled && input.id === "photoNo" ? "" : state[input.id]}
 					step={step}
 				/>
 			)}
