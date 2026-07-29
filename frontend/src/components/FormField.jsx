@@ -2,7 +2,7 @@ import Input from "./Input";
 import Select from "./Select";
 
 const FormField = ({ input, state, dispatch, errors }) => {
-	const isDisabled = state.snapType === "Scan" && input.id === "photoNo";
+	const isDisabled = input.disabled || (state.snapType === "Scan" && input.id === "photoNo");
 	const step = input.id === "amount" ? "10" : "1";
 
 	return (
@@ -24,7 +24,7 @@ const FormField = ({ input, state, dispatch, errors }) => {
 					placeholder={input.placeholder}
 					disabled={isDisabled}
 					dispatch={dispatch}
-					value={state[input.id]}
+					value={isDisabled && input.id === "photoNo" ? "" : state[input.id]}
 					step={step}
 				/>
 			)}

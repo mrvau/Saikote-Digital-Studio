@@ -4,3 +4,4 @@ studio.db
 .env
 .env.*
 studio.db-*
+backups

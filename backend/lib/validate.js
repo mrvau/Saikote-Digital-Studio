@@ -1,3 +1,5 @@
+import { calculateDueAmount } from "../models/order.model.js";
+
 const toNumber = (value) => {
 	const n = Number(value);
 	return Number.isFinite(n) ? n : NaN;
@@ -36,6 +38,41 @@ export const validateOrder = (data) => {
 		}
 	}
 
+	// Payment fields validation
+	const paymentMethod = data.paymentMethod !== undefined && data.paymentMethod !== null ? data.paymentMethod : "cash";
+	const paidAmount = data.paidAmount !== undefined && data.paidAmount !== null ? toNumber(data.paidAmount) : 0;
+	const dueAmount = data.dueAmount !== undefined && data.dueAmount !== null ? toNumber(data.dueAmount) : calculateDueAmount(amount, paidAmount);
+	
+	let isPaidUser = data.isPaid;
+	if (isPaidUser === undefined || isPaidUser === null) {
+		isPaidUser = paidAmount >= amount;
+	} else {
+		isPaidUser = isPaidUser === true || isPaidUser === 1 || isPaidUser === "true";
+	}
+
+	if (!paymentMethod || !["cash", "card", "internet_banking", "bank_transfer"].includes(paymentMethod)) {
+		errors.paymentMethod = "Payment method is required and must be one of: 'cash', 'card', 'internet_banking', 'bank_transfer'.";
+	}
+	if (!Number.isFinite(paidAmount) || paidAmount < 0 || paidAmount > amount) {
+		errors.paidAmount = "Paid amount must be >= 0 and <= amount.";
+	}
+	if (!Number.isFinite(dueAmount) || dueAmount < 0 || dueAmount > amount) {
+		errors.dueAmount = "Due amount must be >= 0 and <= amount.";
+	}
+	if (Number.isFinite(paidAmount) && Number.isFinite(dueAmount) && Number.isFinite(amount)) {
+		if ((paidAmount + dueAmount).toFixed(2) !== amount.toFixed(2)) {
+			errors.dueAmount = "Paid amount + dueAmount must equal amount.";
+		}
+	}
+	if (paidAmount === amount && !isPaidUser) {
+		errors.isPaid = "If paidAmount equals amount, isPaid must be true.";
+	}
+	if (isPaidUser && dueAmount !== 0) {
+		errors.dueAmount = "If isPaid is true, dueAmount must be 0.";
+	}
+
+	const paymentNotes = data.paymentNotes !== undefined && data.paymentNotes !== null ? String(data.paymentNotes) : null;
+
 	return {
 		errors,
 		data: {
@@ -47,6 +84,11 @@ export const validateOrder = (data) => {
 			deliveryType: data.printMethod === "Lab" ? data.deliveryType : null,
 			labPhotoSize: data.printMethod === "Lab" ? data.labPhotoSize : null,
 			labQuantity,
+			paymentMethod,
+			isPaid: paidAmount >= amount ? 1 : 0,
+			paidAmount,
+			dueAmount: calculateDueAmount(amount, paidAmount),
+			paymentNotes,
 		},
 	};
 };

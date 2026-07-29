@@ -4,3 +4,5 @@ node_modules
 .env
 release
 package-lock.json
+.kilo
+instructions

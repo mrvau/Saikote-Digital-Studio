@@ -68,15 +68,21 @@ const Reports = () => {
 				getExpenses({ from, to }),
 			]);
 
-			const rows = [["Date", "Type", "Details", "Amount"]];
+			const rows = [["Date", "Type", "Details", "Amount", "Payment Status", "Paid", "Due"]];
+
 			ordersRes.data.forEach((order) => {
+				const paymentStatus = order.isPaid ? "Paid" : (order.paidAmount > 0 ? "Partial" : "Unpaid");
 				rows.push([
 					order.createdAt,
 					"Order",
 					`${order.snapType} ${order.photoSize} x${order.quantity}`,
 					order.amount,
+					paymentStatus,
+					order.paidAmount,
+					order.dueAmount,
 				]);
 			});
+
 			expensesRes.data.forEach((expense) => {
 				const isSalary = expense.category === "salary";
 				rows.push([
@@ -84,6 +90,9 @@ const Reports = () => {
 					isSalary ? "Salary" : "Expense",
 					isSalary ? "Salary" : expense.expenseType,
 					-expense.amount,
+					"",
+					"",
+					"",
 				]);
 			});
 
@@ -148,7 +157,7 @@ const Reports = () => {
 				{loading || !summary ? (
 					<p className="text-[#888888]">Loading…</p>
 				) : (
-					<div className="grid grid-cols-3 gap-4">
+					<div className="grid grid-cols-4 gap-4">
 						<div className="bg-[#1d3a2f] rounded-md p-5">
 							<div className="text-[#7ed9a8] text-sm font-bold mb-1">Income</div>
 							<div className="text-2xl font-bold text-white">{summary.income}</div>
@@ -160,6 +169,15 @@ const Reports = () => {
 						<div className="bg-[#2a2a2a] rounded-md p-5">
 							<div className="text-[#cccccc] text-sm font-bold mb-1">Net</div>
 							<div className="text-2xl font-bold text-white">{summary.net}</div>
+						</div>
+						<div className="bg-[#3a2a1d] rounded-md p-5">
+							<div className="text-[#e0c97d] text-sm font-bold mb-1">Outstanding</div>
+							<div className="text-2xl font-bold text-white">৳{summary.totalOutstanding || 0}</div>
+							{summary.unpaidOrderCount > 0 && (
+								<div className="text-xs text-[#e0c97d] mt-1">
+									{summary.unpaidOrderCount} unpaid order{summary.unpaidOrderCount !== 1 ? "s" : ""}
+								</div>
+							)}
 						</div>
 					</div>
 				)}

@@ -9,12 +9,15 @@
 		"migrate": "node -e \"import('./database/db.js')\""
 	},
 	"dependencies": {
-		"better-sqlite3": "^12.11.1",
+		"better-sqlite3": "^13.0.1",
 		"cors": "^2.8.5",
 		"express": "^4.16.1",
 		"helmet": "^7.1.0"
 	},
 	"devDependencies": {
 		"nodemon": "^3.1.14"
+	},
+	"allowScripts": {
+		"better-sqlite3": true
 	}
 }

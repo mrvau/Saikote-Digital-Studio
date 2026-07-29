@@ -31,6 +31,9 @@ const Navbar = () => {
 						<span className="text-[#7ed9a8]">+{summary.income}</span>
 						<span className="text-[#e08b8b]">-{summary.expense}</span>
 						<span className="text-white">Net {summary.net}</span>
+						{summary.totalOutstanding > 0 && (
+							<span className="text-[#e0c97d]">💰 Due: ৳{summary.totalOutstanding}</span>
+						)}
 					</div>
 				) : (
 					<div className="text-[#888888]">Loading…</div>

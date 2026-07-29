@@ -31,6 +31,13 @@ const KIND_TABS = [
 	{ key: "salary", label: "Salary" },
 ];
 
+const PAYMENT_TABS = [
+	{ key: "all", label: "All" },
+	{ key: "paid", label: "Paid" },
+	{ key: "unpaid", label: "Unpaid" },
+	{ key: "partial", label: "Partial" },
+];
+
 const DocumentsList = () => {
 	const [documents, setDocuments] = useState([]);
 	const [loading, setLoading] = useState(true);
@@ -38,6 +45,7 @@ const DocumentsList = () => {
 	const [confirmTarget, setConfirmTarget] = useState(null);
 	const [filterDate, setFilterDate] = useState(todayString());
 	const [filterKind, setFilterKind] = useState("all");
+	const [filterPaymentStatus, setFilterPaymentStatus] = useState("all");
 	const [monthlySalary, setMonthlySalary] = useState(0);
 	const { toast, showToast } = useToast();
 	const {fetchSummary} = useContext(SummaryContext)
@@ -47,6 +55,13 @@ const DocumentsList = () => {
 		[filterDate, isSalaryFilter],
 	);
 	const summaryMonth = filterDate ? filterDate.slice(0, 7) : currentMonthString();
+
+	// Reset payment filter when switching to a kind that doesn't support it
+	useEffect(() => {
+		if (filterKind === "expense" || filterKind === "salary") {
+			setFilterPaymentStatus("all");
+		}
+	}, [filterKind]);
 
 	const load = useCallback(async (params, month, options = {}) => {
 		setLoading(true);
@@ -88,10 +103,21 @@ const DocumentsList = () => {
 		return () => controller.abort();
 	}, [load, documentParams, summaryMonth]);
 
-	// Kind filtering is applied client-side — no extra API call needed
-	// since the data is already loaded and kind is a property on every row.
-	const visibleDocuments =
-		filterKind === "all" ? documents : documents.filter((d) => d.kind === filterKind);
+	const visibleDocuments = useMemo(() => {
+		let docs = filterKind === "all" ? documents : documents.filter((d) => d.kind === filterKind);
+
+		if (filterPaymentStatus !== "all") {
+			docs = docs.filter((d) => {
+				if (d.kind !== "order") return true; // non-orders always pass
+				if (filterPaymentStatus === "paid") return d.isPaid;
+				if (filterPaymentStatus === "unpaid") return !d.isPaid && d.paidAmount === 0;
+				if (filterPaymentStatus === "partial") return !d.isPaid && d.paidAmount > 0;
+				return true;
+			});
+		}
+
+		return docs;
+	}, [documents, filterKind, filterPaymentStatus]);
 
 	const totals = useMemo(() => {
 		if (!filterDate) return null;
@@ -129,6 +155,8 @@ const DocumentsList = () => {
 				? `No records found for ${filterDate}.`
 				: "No orders or expenses yet — add one to see it here.";
 
+	const showPaymentFilter = filterKind === "all" || filterKind === "order";
+
 	return (
 		<>
 			<div className="bg-[#222222] rounded-md text-[#cccccc] w-5xl overflow-visible">
@@ -150,6 +178,25 @@ const DocumentsList = () => {
 
 					{/* Divider */}
 					<div className="w-px h-5 bg-[#333333]" />
+
+					{/* Payment status filter — only when orders are visible */}
+					{showPaymentFilter && (
+						<>
+							<div className="flex gap-1.5">
+								{PAYMENT_TABS.map((tab) => (
+									<TabButton
+										key={tab.key}
+										active={filterPaymentStatus === tab.key}
+										onClick={() => setFilterPaymentStatus(tab.key)}
+										size="sm"
+										hover>
+										{tab.label}
+									</TabButton>
+								))}
+							</div>
+							<div className="w-px h-5 bg-[#333333]" />
+						</>
+					)}
 
 					{/* Date filter */}
 					<input
@@ -185,10 +232,11 @@ const DocumentsList = () => {
 					</span>
 				</div>
 
-				{/* Column headers */}
-				<div className="grid grid-cols-[110px_90px_1fr_110px_140px] gap-2 px-5 py-3 text-[#888888] text-sm font-bold border-b border-[#333333]">
+				{/* Column headers — 6 columns to match DocumentRow */}
+				<div className="grid grid-cols-[110px_90px_110px_1fr_110px_140px] gap-2 px-5 py-3 text-[#888888] text-sm font-bold border-b border-[#333333]">
 					<span>Date</span>
 					<span>Type</span>
+					<span>Status</span>
 					<span>Details</span>
 					<span>Amount</span>
 					<span></span>
